@@ -7,6 +7,7 @@ custom:
 provider:
   name: aws
   runtime: nodejs14.x
+  region: ap-southeast-1
   iam:
     role:
       statements:
@@ -19,7 +20,7 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
           Resource:
-            - Fn::GetAtt: [ UsersTable, Arn ]
+            - Fn::GetAtt: [UsersTable, Arn]
   environment:
     USERS_TABLE: ${self:custom.tableName}
 
@@ -42,3 +43,7 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.tableName}
+
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline
