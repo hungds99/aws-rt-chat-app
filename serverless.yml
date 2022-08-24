@@ -1,3 +1,5 @@
+org: hungdinh
+app: aws-rt-chat-app
 service: aws-rt-chat-app
 frameworkVersion: '3'
 
