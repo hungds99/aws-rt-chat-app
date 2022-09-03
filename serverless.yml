@@ -1,51 +1,96 @@
 org: hungdinh
-app: aws-rt-chat-app
-service: aws-rt-chat-app
+app: aws-rt-chat
+service: aws-rt-chat
 frameworkVersion: '3'
 
 custom:
-  tableName: 'users-table-${sls:stage}'
+    tableName: 'main-table-${sls:stage}'
 
 provider:
-  name: aws
-  runtime: nodejs14.x
-  region: ap-southeast-1
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action:
-            - dynamodb:Query
-            - dynamodb:Scan
-            - dynamodb:GetItem
-            - dynamodb:PutItem
-            - dynamodb:UpdateItem
-            - dynamodb:DeleteItem
-          Resource:
-            - Fn::GetAtt: [UsersTable, Arn]
-  environment:
-    USERS_TABLE: ${self:custom.tableName}
+    name: aws
+    stage: dev
+    runtime: nodejs14.x
+    region: ap-southeast-1
+    iam:
+        role:
+            statements:
+                - Effect: Allow
+                  Action:
+                      - dynamodb:Query
+                      - dynamodb:Scan
+                      - dynamodb:GetItem
+                      - dynamodb:PutItem
+                      - dynamodb:UpdateItem
+                      - dynamodb:DeleteItem
+                  Resource:
+                      - Fn::GetAtt: [MainTable, Arn]
+                      - Fn::Join: [/, [Fn::GetAtt: [MainTable, Arn], 'index', 'gsi1']]
+
+    environment:
+        MAIN_TABLE: ${self:custom.tableName}
 
 functions:
-  api:
-    handler: src/users.handler
-    events:
-      - httpApi: '*'
+    getUsers:
+        handler: src/users/index.handler
+        events:
+            - http:
+                  path: users
+                  method: get
+                  cors: true
+    createUser:
+        handler: src/users/create.handler
+        events:
+            - http:
+                  path: users
+                  method: post
+                  cors: true
+    getUser:
+        handler: src/users/get.handler
+        events:
+            - http:
+                  path: users/{id}
+                  method: get
+                  cors: true
+    # updateUser:
+    #     handler: src/users/update.handler
+    #     events:
+    #         - http:
+    #               path: users/{id}
+    #               method: put
+    #               cors: true
 
 resources:
-  Resources:
-    UsersTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        AttributeDefinitions:
-          - AttributeName: userId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: userId
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-        TableName: ${self:custom.tableName}
+    Resources:
+        MainTable:
+            Type: AWS::DynamoDB::Table
+            Properties:
+                AttributeDefinitions:
+                    - AttributeName: pk
+                      AttributeType: S
+                    - AttributeName: sk
+                      AttributeType: S
+                    - AttributeName: gsi1pk
+                      AttributeType: S
+                    - AttributeName: gsi1sk
+                      AttributeType: S
+                KeySchema:
+                    - AttributeName: pk
+                      KeyType: HASH
+                    - AttributeName: sk
+                      KeyType: RANGE
+                GlobalSecondaryIndexes:
+                    - IndexName: gsi1
+                      KeySchema:
+                          - AttributeName: gsi1pk
+                            KeyType: HASH
+                          - AttributeName: gsi1sk
+                            KeyType: RANGE
+                      Projection:
+                          ProjectionType: ALL
+                BillingMode: PAY_PER_REQUEST
+                TableName: ${self:custom.tableName}
 
 plugins:
-  - serverless-dynamodb-local
-  - serverless-offline
+    - serverless-dynamodb-local
+    - serverless-offline
+    - serverless-esbuild
