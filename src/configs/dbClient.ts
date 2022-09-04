@@ -1,5 +1,11 @@
-import { DynamoDB } from 'aws-sdk';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 
-export const DBClient = new DynamoDB.DocumentClient({
-    region: 'ap-southeast-1',
-});
+const options =
+    process.env.NODE_ENV === 'test'
+        ? {
+              region: 'ap-southeast-1',
+              endpoint: 'http://localhost:8000',
+          }
+        : { region: 'ap-southeast-1' };
+
+export const DBClient: DocumentClient = new DocumentClient({ ...options });

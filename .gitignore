@@ -1,3 +1,7 @@
 node_modules
 .serverless
 .env
+coverage
+.dynamodb
+.esbuild
+docker

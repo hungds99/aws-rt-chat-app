@@ -29,7 +29,7 @@ export class UserServices implements UserServices {
             const result = await DBClient.query({
                 ...params,
             }).promise();
-            const users: User[] = plainToInstance(User, result.Items);
+            const users: User[] = plainToInstance(User, result.Items && []);
             return users;
         } catch (error) {
             throw Error(error);
@@ -52,12 +52,12 @@ export class UserServices implements UserServices {
                             ConditionExpression: 'attribute_not_exists(pk)',
                             Item: {
                                 pk: `USER_ID#${userId}`,
-                                sk: `CREATED_AT#${createdAt}`,
                                 gsi1pk: `USERS`,
                                 gsi1sk: `USERNAME#${userName.toLowerCase()}`,
                                 userId,
                                 userName,
                                 email,
+                                createdAt,
                             },
                         },
                     },
@@ -83,6 +83,7 @@ export class UserServices implements UserServices {
             });
             return user;
         } catch (error) {
+            console.log('error: ', error);
             throw Error('Could not create user');
         }
     }
@@ -99,6 +100,7 @@ export class UserServices implements UserServices {
             const user = plainToInstance(User, result.Item);
             return user;
         } catch (error) {
+            console.log('error: ', error);
             throw Error(error);
         }
     }
@@ -113,7 +115,7 @@ export class UserServices implements UserServices {
 
         try {
             const result = await DBClient.get(params).promise();
-            const user = plainToInstance(User, result);
+            const user = plainToInstance(User, result && {});
             return user;
         } catch (error) {
             throw Error(error);

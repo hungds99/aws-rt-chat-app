@@ -3,6 +3,11 @@ app: aws-rt-chat
 service: aws-rt-chat
 frameworkVersion: '3'
 
+plugins:
+    - serverless-esbuild
+    - serverless-dynamodb-local
+    - serverless-offline
+
 custom:
     tableName: 'main-table-${sls:stage}'
 
@@ -22,43 +27,38 @@ provider:
                       - dynamodb:PutItem
                       - dynamodb:UpdateItem
                       - dynamodb:DeleteItem
+                      - dynamodb:BatchGetItem
+                      - dynamodb:BatchWriteItem
+                      - dynamodb:TransactGetItems
+                      - dynamodb:TransactWriteItems
                   Resource:
                       - Fn::GetAtt: [MainTable, Arn]
                       - Fn::Join: [/, [Fn::GetAtt: [MainTable, Arn], 'index', 'gsi1']]
-
     environment:
         MAIN_TABLE: ${self:custom.tableName}
 
 functions:
     getUsers:
-        handler: src/users/index.handler
+        handler: './src/handlers/users/index.handler'
         events:
             - http:
-                  path: users
+                  path: /users
                   method: get
                   cors: true
     createUser:
-        handler: src/users/create.handler
+        handler: './src/handlers/users/create.handler'
         events:
             - http:
-                  path: users
+                  path: /users
                   method: post
                   cors: true
     getUser:
-        handler: src/users/get.handler
+        handler: './src/handlers/users/show.handler'
         events:
             - http:
-                  path: users/{id}
+                  path: /users/{id}
                   method: get
                   cors: true
-    # updateUser:
-    #     handler: src/users/update.handler
-    #     events:
-    #         - http:
-    #               path: users/{id}
-    #               method: put
-    #               cors: true
-
 resources:
     Resources:
         MainTable:
@@ -67,8 +67,6 @@ resources:
                 AttributeDefinitions:
                     - AttributeName: pk
                       AttributeType: S
-                    - AttributeName: sk
-                      AttributeType: S
                     - AttributeName: gsi1pk
                       AttributeType: S
                     - AttributeName: gsi1sk
@@ -76,8 +74,6 @@ resources:
                 KeySchema:
                     - AttributeName: pk
                       KeyType: HASH
-                    - AttributeName: sk
-                      KeyType: RANGE
                 GlobalSecondaryIndexes:
                     - IndexName: gsi1
                       KeySchema:
@@ -89,8 +85,3 @@ resources:
                           ProjectionType: ALL
                 BillingMode: PAY_PER_REQUEST
                 TableName: ${self:custom.tableName}
-
-plugins:
-    - serverless-dynamodb-local
-    - serverless-offline
-    - serverless-esbuild
