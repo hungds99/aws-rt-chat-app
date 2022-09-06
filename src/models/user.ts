@@ -1,6 +1,8 @@
+import { Expose } from 'class-transformer';
+
 export class User {
-    userId: string;
-    email: string;
-    userName: string;
-    createdAt: string;
+    @Expose() userId: string;
+    @Expose() email: string;
+    @Expose() userName: string;
+    @Expose() createdAt: string;
 }

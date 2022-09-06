@@ -1,11 +1,17 @@
 {
+    "compileOnSave": true,
     "compilerOptions": {
-        "target": "es6",
-        "module": "commonjs",
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "outDir": "dist"
+        "module": "esnext",
+        "moduleResolution": "node",
+        "target": "es5",
+        "lib": ["dom", "es2015", "es2016"],
+        "sourceMap": false,
+        "declaration": true,
+        "experimentalDecorators": true,
+        "jsx": "react",
+        "outDir": "lib",
+        "noUnusedLocals": false
     },
-    "include": ["./src/**/*.ts", "_tests/users.test.ts"],
-    "exclude": ["node_modules"]
+    "exclude": ["node_modules", "static", "lib"],
+    "include": ["src/**/*.ts"]
 }

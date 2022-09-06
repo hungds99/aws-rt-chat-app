@@ -29,7 +29,9 @@ export class UserServices implements UserServices {
             const result = await DBClient.query({
                 ...params,
             }).promise();
-            const users: User[] = plainToInstance(User, result.Items && []);
+            const users: User[] = plainToInstance(User, result.Items, {
+                excludeExtraneousValues: true,
+            });
             return users;
         } catch (error) {
             throw Error(error);
@@ -52,8 +54,9 @@ export class UserServices implements UserServices {
                             ConditionExpression: 'attribute_not_exists(pk)',
                             Item: {
                                 pk: `USER_ID#${userId}`,
+                                sk: `PROFILE`,
                                 gsi1pk: `USERS`,
-                                gsi1sk: `USERNAME#${userName.toLowerCase()}`,
+                                gsi1sk: `USERNAME#${userName.split('').join('').toLowerCase()}`,
                                 userId,
                                 userName,
                                 email,
@@ -67,6 +70,7 @@ export class UserServices implements UserServices {
                             ConditionExpression: 'attribute_not_exists(pk)',
                             Item: {
                                 pk: `USER_EMAIL#${email}`,
+                                sk: `PROFILE`,
                             },
                         },
                     },
@@ -94,10 +98,13 @@ export class UserServices implements UserServices {
                 TableName: Environments.MAIN_TABLE,
                 Key: {
                     pk: `USER_EMAIL#${email}`,
+                    sk: `PROFILE`,
                 },
             };
             const result = await DBClient.get(params).promise();
-            const user = plainToInstance(User, result.Item);
+            const user = plainToInstance(User, result.Item, {
+                excludeExtraneousValues: true,
+            });
             return user;
         } catch (error) {
             console.log('error: ', error);
@@ -110,12 +117,15 @@ export class UserServices implements UserServices {
             TableName: Environments.MAIN_TABLE,
             Key: {
                 pk: `USER_ID#${id}`,
+                sk: `PROFILE`,
             },
         };
 
         try {
             const result = await DBClient.get(params).promise();
-            const user = plainToInstance(User, result && {});
+            const user = plainToInstance(User, result.Item, {
+                excludeExtraneousValues: true,
+            });
             return user;
         } catch (error) {
             throw Error(error);

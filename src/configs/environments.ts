@@ -1,3 +1,3 @@
 export const Environments = {
-    MAIN_TABLE: 'MainTable',
+    MAIN_TABLE: process.env.MAIN_TABLE,
 };
