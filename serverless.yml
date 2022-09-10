@@ -5,11 +5,10 @@ frameworkVersion: '3'
 
 plugins:
     - serverless-esbuild
-    - serverless-dynamodb-local
     - serverless-offline
 
 custom:
-    tableName: 'main-table-${sls:stage}'
+    tableName: 'MAIN_TABLE'
 
 provider:
     name: aws
@@ -39,21 +38,21 @@ provider:
 
 functions:
     getUsers:
-        handler: './src/handlers/users/index.handler'
+        handler: './src/handlers/users/index.getUsers'
         events:
             - http:
                   path: /users
                   method: get
                   cors: true
     createUser:
-        handler: './src/handlers/users/create.handler'
+        handler: './src/handlers/users/index.createUser'
         events:
             - http:
                   path: /users
                   method: post
                   cors: true
     getUser:
-        handler: './src/handlers/users/show.handler'
+        handler: './src/handlers/users/index.getUser'
         events:
             - http:
                   path: /users/{id}
@@ -76,6 +75,8 @@ resources:
                 KeySchema:
                     - AttributeName: pk
                       KeyType: HASH
+                    - AttributeName: sk
+                      KeyType: RANGE
                 GlobalSecondaryIndexes:
                     - IndexName: gsi1
                       KeySchema:

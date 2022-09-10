@@ -1,31 +1,35 @@
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { plainToInstance } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
-import { BadRequest, NotFound } from '../common/exceptions';
-import { Config } from '../configs';
-import { DBClient } from '../configs/dbClient';
-import { User } from '../models/user';
+import { BadRequest, NotFound } from '../../common/exceptions';
+import { Config } from '../../configs';
+import { DBClient } from '../../configs/dbClient';
+import { getAvatar } from '../../helpers/avatar';
+import { validate } from '../../helpers/validate';
+import { User } from './user.model';
+import { NewUserValidationSchema } from './user.schema';
 
 export interface UserServices {
-    create(userName: string, email: string, avatar?: string): Promise<User>;
+    create(username: string, email: string, avatar?: string): Promise<User>;
     findByEmail(email: string): Promise<User>;
     findAll(): Promise<User[]>;
     findById(id: string): Promise<User>;
 }
 
 export class UserServices implements UserServices {
-    async create(userName: string, email: string, avatar?: string): Promise<User> {
+    async create(username: string, email: string, avatar?: string): Promise<User> {
+        await validate(NewUserValidationSchema, { username, email });
         const user = await this.findByEmail(email);
         if (user) throw new BadRequest('User already exists');
 
         try {
             const userId = uuidv4();
-            const userNameSK = userName.split('').join('').toLowerCase();
+            const usernameSK = username.split(' ').join('').toLowerCase();
 
             const userParams = {
                 userId,
-                userName,
-                avatar: avatar ? avatar : `https://avatars.dicebear.com/api/adventurer/${userNameSK}.svg`,
+                username,
+                avatar: avatar ? avatar : getAvatar(usernameSK),
                 email,
                 createdAt: new Date().getTime(),
             };
@@ -40,7 +44,7 @@ export class UserServices implements UserServices {
                                 pk: `USER#${userId}`,
                                 sk: `META`,
                                 gsi1pk: `USERS`,
-                                gsi1sk: `USERNAME#${userNameSK}`,
+                                gsi1sk: `USERNAME#${usernameSK}`,
                                 ...userParams,
                             },
                         },
