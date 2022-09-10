@@ -5,3 +5,4 @@ coverage
 .dynamodb
 .esbuild
 docker
+localstack

@@ -1,22 +1,95 @@
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { plainToInstance } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
+import { BadRequest, NotFound } from '../common/exceptions';
+import { Config } from '../configs';
 import { DBClient } from '../configs/dbClient';
-import { Environments } from '../configs/environments';
 import { User } from '../models/user';
 
 export interface UserServices {
-    findAll(): Promise<User[]>;
-    create(userName: string, email: string): Promise<User>;
-    findById(id: string): Promise<User>;
+    create(userName: string, email: string, avatar?: string): Promise<User>;
     findByEmail(email: string): Promise<User>;
+    findAll(): Promise<User[]>;
+    findById(id: string): Promise<User>;
 }
 
 export class UserServices implements UserServices {
+    async create(userName: string, email: string, avatar?: string): Promise<User> {
+        const user = await this.findByEmail(email);
+        if (user) throw new BadRequest('User already exists');
+
+        try {
+            const userId = uuidv4();
+            const userNameSK = userName.split('').join('').toLowerCase();
+
+            const userParams = {
+                userId,
+                userName,
+                avatar: avatar ? avatar : `https://avatars.dicebear.com/api/adventurer/${userNameSK}.svg`,
+                email,
+                createdAt: new Date().getTime(),
+            };
+
+            const params: DocumentClient.TransactWriteItemsInput = {
+                TransactItems: [
+                    {
+                        Put: {
+                            TableName: Config.dynamodb.MAIN_TABLE,
+                            ConditionExpression: 'attribute_not_exists(pk)',
+                            Item: {
+                                pk: `USER#${userId}`,
+                                sk: `META`,
+                                gsi1pk: `USERS`,
+                                gsi1sk: `USERNAME#${userNameSK}`,
+                                ...userParams,
+                            },
+                        },
+                    },
+                    {
+                        Put: {
+                            TableName: Config.dynamodb.MAIN_TABLE,
+                            ConditionExpression: 'attribute_not_exists(pk)',
+                            Item: {
+                                pk: `EMAIL#${email}`,
+                                sk: `EMAIL`,
+                            },
+                        },
+                    },
+                ],
+            };
+
+            await DBClient.transactWrite(params).promise();
+
+            const user: User = plainToInstance(User, { ...userParams });
+            return user;
+        } catch (error) {
+            throw Error(error);
+        }
+    }
+
+    async findByEmail(email: string): Promise<User> {
+        try {
+            const params: DocumentClient.GetItemInput = {
+                TableName: Config.dynamodb.MAIN_TABLE,
+                Key: {
+                    pk: `EMAIL#${email}`,
+                    sk: `EMAIL`,
+                },
+            };
+            const result = await DBClient.get(params).promise();
+            const user = plainToInstance(User, result.Item, {
+                excludeExtraneousValues: true,
+            });
+            return user;
+        } catch (error) {
+            throw Error(error);
+        }
+    }
+
     async findAll(): Promise<User[]> {
         try {
             const params: DocumentClient.QueryInput = {
-                TableName: Environments.MAIN_TABLE,
+                TableName: Config.dynamodb.MAIN_TABLE,
                 IndexName: 'gsi1',
                 KeyConditionExpression: '#gsi1pk = :gsi1pk',
                 ExpressionAttributeValues: {
@@ -38,86 +111,12 @@ export class UserServices implements UserServices {
         }
     }
 
-    async create(userName: string, email: string): Promise<User> {
-        const user = await this.findByEmail(email);
-        if (user) throw Error('User already exists');
-
-        try {
-            const userId = uuidv4();
-            const createdAt = new Date().getTime();
-
-            const params: DocumentClient.TransactWriteItemsInput = {
-                TransactItems: [
-                    {
-                        Put: {
-                            TableName: Environments.MAIN_TABLE,
-                            ConditionExpression: 'attribute_not_exists(pk)',
-                            Item: {
-                                pk: `USER_ID#${userId}`,
-                                sk: `PROFILE`,
-                                gsi1pk: `USERS`,
-                                gsi1sk: `USERNAME#${userName.split('').join('').toLowerCase()}`,
-                                userId,
-                                userName,
-                                email,
-                                createdAt,
-                            },
-                        },
-                    },
-                    {
-                        Put: {
-                            TableName: Environments.MAIN_TABLE,
-                            ConditionExpression: 'attribute_not_exists(pk)',
-                            Item: {
-                                pk: `USER_EMAIL#${email}`,
-                                sk: `PROFILE`,
-                            },
-                        },
-                    },
-                ],
-            };
-
-            await DBClient.transactWrite(params).promise();
-
-            const user: User = plainToInstance(User, {
-                userId,
-                email,
-                userName,
-                createdAt,
-            });
-            return user;
-        } catch (error) {
-            console.log('error: ', error);
-            throw Error('Could not create user');
-        }
-    }
-
-    async findByEmail(email: string): Promise<User> {
-        try {
-            const params: DocumentClient.GetItemInput = {
-                TableName: Environments.MAIN_TABLE,
-                Key: {
-                    pk: `USER_EMAIL#${email}`,
-                    sk: `PROFILE`,
-                },
-            };
-            const result = await DBClient.get(params).promise();
-            const user = plainToInstance(User, result.Item, {
-                excludeExtraneousValues: true,
-            });
-            return user;
-        } catch (error) {
-            console.log('error: ', error);
-            throw Error(error);
-        }
-    }
-
     async findById(id: string): Promise<User> {
         const params = {
-            TableName: Environments.MAIN_TABLE,
+            TableName: Config.dynamodb.MAIN_TABLE,
             Key: {
-                pk: `USER_ID#${id}`,
-                sk: `PROFILE`,
+                pk: `USER#${id}`,
+                sk: `META`,
             },
         };
 
@@ -126,6 +125,7 @@ export class UserServices implements UserServices {
             const user = plainToInstance(User, result.Item, {
                 excludeExtraneousValues: true,
             });
+            if (!user) throw new NotFound('User not found');
             return user;
         } catch (error) {
             throw Error(error);

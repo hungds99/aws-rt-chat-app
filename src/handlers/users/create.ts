@@ -1,20 +1,10 @@
+import { WrapperHandler } from '../../common/wrapper-handler';
 import { UserServices } from '../../services/users';
 
-const userServices = new UserServices();
-export const handler = async (event) => {
+export const handler = WrapperHandler(async (event: any) => {
+    const userServices = new UserServices();
+
     const { userName, email } = JSON.parse(event.body);
-    try {
-        const user = await userServices.create(userName, email);
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ user }),
-        };
-    } catch (error) {
-        return {
-            statusCode: 500,
-            body: JSON.stringify({
-                error: error instanceof Error ? error.message : 'Internal server error',
-            }),
-        };
-    }
-};
+    const user = await userServices.create(userName, email);
+    return user;
+});
