@@ -6,7 +6,7 @@ export class BaseError {
 }
 
 // General exception errors
-export class BadRequest extends BaseError {
+export class BadRequestException extends BaseError {
     constructor(error?: any) {
         super();
         this.code = HTTPCode.BAD_REQUEST;
@@ -14,7 +14,7 @@ export class BadRequest extends BaseError {
     }
 }
 
-export class Unauthorized extends BaseError {
+export class UnauthorizedException extends BaseError {
     constructor(error?: any) {
         super();
         this.code = HTTPCode.UNAUTHORIZED;
@@ -22,7 +22,7 @@ export class Unauthorized extends BaseError {
     }
 }
 
-export class Forbidden extends BaseError {
+export class ForbiddenException extends BaseError {
     constructor(error?: any) {
         super();
         this.code = HTTPCode.FORBIDDEN;
@@ -30,7 +30,7 @@ export class Forbidden extends BaseError {
     }
 }
 
-export class NotFound extends BaseError {
+export class NotFoundException extends BaseError {
     constructor(error?: any) {
         super();
         this.code = HTTPCode.NOT_FOUND;
@@ -46,7 +46,7 @@ export class InternalServerError extends BaseError {
     }
 }
 
-export class CustomError extends BaseError {
+export class CustomException extends BaseError {
     constructor(code: number, error?: any) {
         super();
         this.code = code;

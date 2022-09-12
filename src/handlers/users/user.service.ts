@@ -1,7 +1,7 @@
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { plainToInstance } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
-import { BadRequest, NotFound } from '../../common/exceptions';
+import { BadRequestException, InternalServerError, NotFoundException } from '../../common/exceptions';
 import { Config } from '../../configs';
 import { DBClient } from '../../configs/dbClient';
 import { getAvatar } from '../../helpers/avatar';
@@ -20,7 +20,7 @@ export class UserServices implements UserServices {
     async create(username: string, email: string, avatar?: string): Promise<User> {
         await validate(NewUserValidationSchema, { username, email });
         const user = await this.findByEmail(email);
-        if (user) throw new BadRequest('User already exists');
+        if (user) throw new BadRequestException('User already exists');
 
         try {
             const userId = uuidv4();
@@ -67,7 +67,7 @@ export class UserServices implements UserServices {
             const user: User = plainToInstance(User, { ...userParams });
             return user;
         } catch (error) {
-            throw Error(error);
+            throw new InternalServerError(error);
         }
     }
 
@@ -86,7 +86,7 @@ export class UserServices implements UserServices {
             });
             return user;
         } catch (error) {
-            throw Error(error);
+            throw new InternalServerError(error);
         }
     }
 
@@ -111,7 +111,7 @@ export class UserServices implements UserServices {
             });
             return users;
         } catch (error) {
-            throw Error(error);
+            throw new InternalServerError(error);
         }
     }
 
@@ -129,10 +129,10 @@ export class UserServices implements UserServices {
             const user = plainToInstance(User, result.Item, {
                 excludeExtraneousValues: true,
             });
-            if (!user) throw new NotFound('User not found');
+            if (!user) throw new NotFoundException('User not found');
             return user;
         } catch (error) {
-            throw Error(error);
+            throw new InternalServerError(error);
         }
     }
 }

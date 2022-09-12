@@ -1,5 +1,5 @@
 import * as Joi from 'joi';
-import { BadRequest } from '../common/exceptions';
+import { BadRequestException, InternalServerError } from '../common/exceptions';
 
 export const validate = async (joiSchema: Joi.ObjectSchema<any>, value: any, options?: Joi.AsyncValidationOptions) => {
     try {
@@ -10,8 +10,8 @@ export const validate = async (joiSchema: Joi.ObjectSchema<any>, value: any, opt
     } catch (error: Joi.ValidationError | any) {
         if (error.isJoi) {
             const errors = error.details.map((detail: Joi.ValidationErrorItem) => detail.message);
-            throw new BadRequest(errors);
+            throw new BadRequestException(errors);
         }
-        throw new Error(error);
+        throw new InternalServerError(error);
     }
 };
