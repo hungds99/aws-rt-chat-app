@@ -7,7 +7,7 @@ import { DBClient } from '../../configs/dbClient';
 import { getAvatar } from '../../helpers/avatar';
 import { validate } from '../../helpers/validate';
 import { User } from './user.model';
-import { NewUserValidationSchema } from './user.schema';
+import { NewUserSchema } from './user.schema';
 
 export interface UserServices {
     create(username: string, email: string, avatar?: string): Promise<User>;
@@ -18,21 +18,22 @@ export interface UserServices {
 
 export class UserServices implements UserServices {
     async create(username: string, email: string, avatar?: string): Promise<User> {
-        await validate(NewUserValidationSchema, { username, email });
+        await validate(NewUserSchema, { username, email });
         const user = await this.findByEmail(email);
         if (user) throw new BadRequestException('User already exists');
 
         try {
-            const userId = uuidv4();
             const usernameSK = username.split(' ').join('').toLowerCase();
-
-            const userParams = {
-                userId,
+            const now = new Date().getTime();
+            const user: User = plainToInstance(User, {
+                userId: uuidv4(),
                 username,
                 avatar: avatar ? avatar : getAvatar(usernameSK),
                 email,
-                createdAt: new Date().getTime(),
-            };
+                createdAt: now,
+                updatedAt: now,
+                type: 'USER',
+            });
 
             const params: DocumentClient.TransactWriteItemsInput = {
                 TransactItems: [
@@ -41,11 +42,11 @@ export class UserServices implements UserServices {
                             TableName: Config.dynamodb.MAIN_TABLE,
                             ConditionExpression: 'attribute_not_exists(pk)',
                             Item: {
-                                pk: `USER#${userId}`,
+                                pk: `USER#${user.userId}`,
                                 sk: `META`,
                                 gsi1pk: `USERS`,
                                 gsi1sk: `USERNAME#${usernameSK}`,
-                                ...userParams,
+                                ...user,
                             },
                         },
                     },
@@ -64,7 +65,6 @@ export class UserServices implements UserServices {
 
             await DBClient.transactWrite(params).promise();
 
-            const user: User = plainToInstance(User, { ...userParams });
             return user;
         } catch (error) {
             throw new InternalServerError(error);

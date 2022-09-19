@@ -1,6 +1,19 @@
-export class Room {
+import { Expose } from 'class-transformer';
+import { Base } from '../../common/model';
+
+export class Room extends Base {
+    @Expose()
     roomId: string;
+
+    @Expose()
     roomName: string;
-    createdAt: number;
+
+    @Expose()
     createdBy: string;
+
+    @Expose()
+    members: string[];
+
+    @Expose()
+    type: 'GROUP_ROOM' | 'PRIVATE_ROOM';
 }

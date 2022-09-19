@@ -1,29 +1,80 @@
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { plainToInstance } from 'class-transformer';
-import { Message } from './message.model';
 import { v4 as uuidv4 } from 'uuid';
+import { BadRequestException } from '../../common/exceptions';
+import { DBClient } from '../../configs/dbClient';
+import { validate } from '../../helpers/validate';
+import { RoomServices } from '../rooms/room.service';
+import { Message } from './message.model';
+import { NewMessageSchema } from './message.schema';
 
 export interface MessageServices {
-    create(roomId: string, userId: string, createdBy: string, message: string): Promise<Message>;
+    create(roomId: string, createdBy: string, message: string): Promise<Message>;
+    findByRoomId(roomId: string): Promise<Message[]>;
 }
 
 export class MessageServices implements MessageServices {
-    async create(roomId: string, userId: string, createdBy: string, message: string): Promise<Message> {
-        const messageId = uuidv4();
+    roomServices: RoomServices;
+    constructor(roomServices = new RoomServices()) {
+        this.roomServices = roomServices;
+    }
 
-        // First message in a room
-        // Create a room
+    async create(roomId: string, createdBy: string, content: string): Promise<Message> {
+        await validate(NewMessageSchema, { roomId, createdBy, content });
 
-        // Send message to room
-        // Add message to room
+        const room = await this.roomServices.findById(roomId);
+        if (!room) throw new BadRequestException(`Room #${roomId} not found`);
 
-        const messageParams = {
-            messageId,
+        const now = new Date().getTime();
+
+        const message = plainToInstance(Message, {
+            messageId: uuidv4(),
             roomId,
-            userId,
-            message,
-            createdAt: new Date().getTime(),
+            createdBy,
+            content,
+            createdAt: now,
+            updatedAt: now,
+            type: 'MESSAGE',
+        });
+
+        const params: DocumentClient.BatchWriteItemInput = {
+            RequestItems: {
+                MAIN_TABLE: [
+                    {
+                        PutRequest: {
+                            Item: {
+                                pk: `ROOM#${roomId}`,
+                                sk: `MESSAGE#${message.createdAt}#${message.messageId}`,
+                                ...message,
+                            },
+                        },
+                    },
+                ],
+            },
         };
 
-        return plainToInstance(Message, messageParams);
+        await DBClient.batchWrite(params).promise();
+
+        return message;
+    }
+
+    async findByRoomId(roomId: string): Promise<Message[]> {
+        const room = await this.roomServices.findById(roomId);
+        if (!room) throw new BadRequestException(`Room #${roomId} not found`);
+
+        const params: DocumentClient.QueryInput = {
+            TableName: process.env.MAIN_TABLE,
+            KeyConditionExpression: 'pk = :pk and begins_with(sk, :sk)',
+            ExpressionAttributeValues: {
+                ':pk': `ROOM#${roomId}`,
+                ':sk': `MESSAGE#`,
+            },
+        };
+
+        const { Items } = await DBClient.query(params).promise();
+
+        const messages = Items.map((item) => plainToInstance(Message, item)) as Message[];
+
+        return messages;
     }
 }

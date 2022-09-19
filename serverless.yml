@@ -39,6 +39,7 @@ provider:
         MAIN_TABLE: ${self:custom.tableName}
 
 functions:
+    # USERS API
     getUsers:
         handler: './src/handlers/users/index.getUsers'
         events:
@@ -60,14 +61,15 @@ functions:
                   path: /users/{id}
                   method: get
                   cors: true
-    wsConnect:
-        handler: './src/handlers/ws/index.wsConnect'
+    # WEBSOCKET API
+    wsOnConnect:
+        handler: './src/handlers/ws/index.wsOnConnect'
         events:
             - websocket:
                   route: $connect
                   routeResponseSelectionExpression: $default
-    wsDisconnect:
-        handler: './src/handlers/ws/index.wsDisconnect'
+    wsOnDisconnect:
+        handler: './src/handlers/ws/index.wsOnDisconnect'
         events:
             - websocket:
                   route: $disconnect
@@ -78,8 +80,8 @@ functions:
             - websocket:
                   route: $default
                   routeResponseSelectionExpression: $default
-    wsMessage:
-        handler: './src/handlers/ws/index.wsMessage'
+    wsOnMessage:
+        handler: './src/handlers/ws/index.wsOnMessage'
         events:
             - websocket:
                   route: message

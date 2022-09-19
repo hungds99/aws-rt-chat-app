@@ -1,6 +1,7 @@
 import { Expose } from 'class-transformer';
+import { Base } from '../../common/model';
 
-export class User {
+export class User extends Base {
     @Expose()
     userId: string;
 
@@ -14,5 +15,5 @@ export class User {
     avatar: string;
 
     @Expose()
-    createdAt: string;
+    type: 'USER';
 }
