@@ -1,9 +1,9 @@
 import * as Joi from 'joi';
 
 export const NewRoomSchema: Joi.ObjectSchema<any> = Joi.object({
-    createdBy: Joi.string().required(),
+    owner: Joi.string().required(),
     type: Joi.string().valid('GROUP', 'PRIVATE').required(),
-    memberIds: Joi.array()
+    members: Joi.array()
         .min(2)
         .when('type', {
             is: 'PRIVATE',

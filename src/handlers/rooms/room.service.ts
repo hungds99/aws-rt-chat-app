@@ -1,14 +1,13 @@
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { plainToInstance } from 'class-transformer';
-import { v4 as uuidv4 } from 'uuid';
 import { BadRequestException } from '../../common/exceptions';
 import { DBClient } from '../../configs/dbClient';
-import { validate } from '../../helpers/validate';
+import { validateSchema } from '../../helpers/validate';
 import { Room } from './room.model';
 import { NewRoomSchema } from './room.schema';
 
 export interface RoomServices {
-    create(createdBy: string, members: string[], type: 'GROUP' | 'PRIVATE'): Promise<Room>;
+    create(connectionId: string, owner: string, members: string[], type: 'GROUP' | 'PRIVATE'): Promise<Room>;
     createPrivate(room: Room): Promise<Room>;
     createGroup(room: Room): Promise<Room>;
     findPrivate(memberIds: string[]): Promise<Room>;
@@ -17,12 +16,12 @@ export interface RoomServices {
 }
 
 export class RoomServices implements RoomServices {
-    async create(createdBy: string, members: string[], type: 'GROUP' | 'PRIVATE'): Promise<Room> {
-        await validate(NewRoomSchema, { createdBy, members, type });
+    async create(connectionId: string, owner: string, members: string[], type: 'GROUP' | 'PRIVATE'): Promise<Room> {
+        await validateSchema(NewRoomSchema, { owner, members, type });
         const now = new Date().getTime();
         const room = plainToInstance(Room, {
-            roomId: uuidv4(),
-            createdBy,
+            roomId: connectionId,
+            owner,
             members,
             type: type === 'GROUP' ? 'GROUP_ROOM' : 'PRIVATE_ROOM',
             createdAt: now,

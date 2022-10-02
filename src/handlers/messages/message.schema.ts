@@ -4,7 +4,7 @@ export const NewMessageSchema: Joi.ObjectSchema<any> = Joi.object({
     type: 'object',
     properties: {
         roomId: Joi.string().required(),
-        createdBy: Joi.string().required(),
+        owner: Joi.string().required(),
         content: Joi.string().required(),
     },
 });

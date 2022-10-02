@@ -9,7 +9,7 @@ import { Message } from './message.model';
 import { NewMessageSchema } from './message.schema';
 
 export interface MessageServices {
-    create(roomId: string, createdBy: string, message: string): Promise<Message>;
+    create(roomId: string, owner: string, message: string): Promise<Message>;
     findByRoomId(roomId: string): Promise<Message[]>;
 }
 
@@ -19,8 +19,8 @@ export class MessageServices implements MessageServices {
         this.roomServices = roomServices;
     }
 
-    async create(roomId: string, createdBy: string, content: string): Promise<Message> {
-        await validate(NewMessageSchema, { roomId, createdBy, content });
+    async create(roomId: string, owner: string, content: string): Promise<Message> {
+        await validate(NewMessageSchema, { roomId, owner, content });
 
         const room = await this.roomServices.findById(roomId);
         if (!room) throw new BadRequestException(`Room #${roomId} not found`);
@@ -30,7 +30,7 @@ export class MessageServices implements MessageServices {
         const message = plainToInstance(Message, {
             messageId: uuidv4(),
             roomId,
-            createdBy,
+            owner,
             content,
             createdAt: now,
             updatedAt: now,

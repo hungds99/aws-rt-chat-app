@@ -9,7 +9,7 @@ export class Message extends Base {
     roomId: string;
 
     @Expose()
-    createdBy: string;
+    owner: string;
 
     @Expose()
     content: string;

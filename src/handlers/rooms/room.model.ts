@@ -9,7 +9,7 @@ export class Room extends Base {
     roomName: string;
 
     @Expose()
-    createdBy: string;
+    owner: string;
 
     @Expose()
     members: string[];

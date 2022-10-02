@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import { Base } from '../../common/model';
 
 export class User extends Base {
@@ -7,6 +7,15 @@ export class User extends Base {
 
     @Expose()
     email: string;
+
+    @Expose({ groups: ['admin'] })
+    password: string;
+
+    @Expose()
+    firstName: string;
+
+    @Expose()
+    lastName: string;
 
     @Expose()
     username: string;
@@ -17,3 +26,13 @@ export class User extends Base {
     @Expose()
     type: 'USER';
 }
+
+export class AuthUser extends User {
+    @Expose()
+    accessToken: string;
+
+    @Expose()
+    refreshToken: string;
+}
+
+export type NewUser = Pick<User, 'email' | 'password' | 'firstName' | 'lastName'>;

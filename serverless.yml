@@ -39,6 +39,22 @@ provider:
         MAIN_TABLE: ${self:custom.tableName}
 
 functions:
+    # Auth API
+    login:
+        handler: './src/handlers/auth/index.login'
+        events:
+            - http:
+                  path: /auth/login
+                  method: post
+                  cors: true
+    register:
+        handler: './src/handlers/auth/index.register'
+        events:
+            - http:
+                  path: /auth/register
+                  method: post
+                  cors: true
+
     # USERS API
     getUsers:
         handler: './src/handlers/users/index.getUsers'
@@ -47,13 +63,6 @@ functions:
                   path: /users
                   method: get
                   cors: true
-    createUser:
-        handler: './src/handlers/users/index.createUser'
-        events:
-            - http:
-                  path: /users
-                  method: post
-                  cors: true
     getUser:
         handler: './src/handlers/users/index.getUser'
         events:
@@ -61,6 +70,7 @@ functions:
                   path: /users/{id}
                   method: get
                   cors: true
+
     # WEBSOCKET API
     wsOnConnect:
         handler: './src/handlers/ws/index.wsOnConnect'
@@ -80,11 +90,13 @@ functions:
             - websocket:
                   route: $default
                   routeResponseSelectionExpression: $default
-    wsOnMessage:
-        handler: './src/handlers/ws/index.wsOnMessage'
+
+    # CHAT WEBSOCKET API
+    wsOnCreateRoom:
+        handler: './src/handlers/ws/room/index.wsOnCreateRoom'
         events:
             - websocket:
-                  route: message
+                  route: createRoom
                   routeResponseSelectionExpression: $default
 resources:
     Resources:
