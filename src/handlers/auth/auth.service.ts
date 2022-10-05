@@ -2,10 +2,15 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import * as bcrypt from 'bcryptjs';
 import { plainToInstance } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
-import { BadRequestException, InternalServerError, UnauthorizedException } from '../../common/exceptions';
+import {
+    BadRequestException,
+    InternalServerError,
+    NotFoundException,
+    UnauthorizedException,
+} from '../../common/exceptions';
 import { Config } from '../../configs';
 import { DBClient } from '../../configs/dbClient';
-import { generateJWT } from '../../helpers/auth';
+import { generateJWT, verifyJWT } from '../../helpers/auth';
 import { getAvatar } from '../../helpers/utils';
 import { validateSchema } from '../../helpers/validate';
 import { AuthUser, NewUser, User } from '../users/user.model';
@@ -13,6 +18,7 @@ import { UserServices } from '../users/user.service';
 import { RegisterUserSchema } from './auth.schema';
 
 export interface AuthServices {
+    authorizer(token: string): Promise<User>;
     login(email: string, password: string): Promise<AuthUser>;
     register(user: NewUser): Promise<User>;
 }
@@ -21,6 +27,18 @@ export class AuthServices implements AuthServices {
     userServices: UserServices;
     constructor(userServices = new UserServices()) {
         this.userServices = userServices;
+    }
+
+    async authorizer(token: string): Promise<User> {
+        try {
+            const tokenDecoded = await verifyJWT(token);
+            if (!tokenDecoded) throw new UnauthorizedException('Invalid token');
+            const user = plainToInstance(User, tokenDecoded?.user);
+            if (!user) throw new NotFoundException('User not found');
+            return user;
+        } catch (error) {
+            throw new InternalServerError(error);
+        }
     }
 
     async login(email: string, password: string): Promise<AuthUser> {

@@ -9,6 +9,8 @@ plugins:
 
 custom:
     tableName: 'MAIN_TABLE'
+    serverless-offline:
+        ignoreJWTSignature: true
 
 provider:
     name: aws
@@ -35,6 +37,25 @@ provider:
                   Resource:
                       - Fn::GetAtt: [MainTable, Arn]
                       - Fn::Join: [/, [Fn::GetAtt: [MainTable, Arn], 'index', 'gsi1']]
+    httpApi:
+        payload: '2.0'
+        cors:
+            allowedHeaders:
+                - Content-Type
+                - Authorization
+            allowedMethods:
+                - GET
+                - POST
+                - OPTIONS
+            allowedOrigins:
+                - https://localhost:3003
+        authorizers:
+            customAuthorizer:
+                type: request
+                functionName: customAuthorizer
+                identitySource: $request.header.Authorization
+                resultTtlInSeconds: 300
+                identityValidationExpression: 'Bearer .*'
     environment:
         MAIN_TABLE: ${self:custom.tableName}
 
@@ -43,33 +64,37 @@ functions:
     login:
         handler: './src/handlers/auth/index.login'
         events:
-            - http:
+            - httpApi:
                   path: /auth/login
                   method: post
-                  cors: true
     register:
         handler: './src/handlers/auth/index.register'
         events:
-            - http:
+            - httpApi:
                   path: /auth/register
                   method: post
-                  cors: true
+
+    # Authorizer API
+    customAuthorizer:
+        handler: './src/handlers/auth/index.authorizer'
 
     # USERS API
     getUsers:
         handler: './src/handlers/users/index.getUsers'
         events:
-            - http:
+            - httpApi:
                   path: /users
                   method: get
-                  cors: true
+                  authorizer:
+                      name: customAuthorizer
     getUser:
         handler: './src/handlers/users/index.getUser'
         events:
-            - http:
+            - httpApi:
                   path: /users/{id}
                   method: get
-                  cors: true
+                  authorizer:
+                      name: customAuthorizer
 
     # WEBSOCKET API
     wsOnConnect:
