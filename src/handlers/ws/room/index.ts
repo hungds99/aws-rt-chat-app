@@ -4,15 +4,20 @@ import { RoomServices } from '../../rooms/room.service';
 
 const roomServices = new RoomServices();
 
-export const wsOnCreateRoom = WrapperHandler(async (event: any) => {
+export const wsOnCreateRoom = WrapperHandler(async (event: any, context: any) => {
     const connectionId = event.requestContext.connectionId;
 
-    const { owner, members } = JSON.parse(event.body);
+    console.log('event 1: ', event);
+    console.log('context : ', context);
 
-    const room = await roomServices.create(connectionId, owner, members, 'PRIVATE');
+    // const { owner, members } = JSON.parse(event.body);
 
-    await apiGWsendMessageToClient(connectionId, {
-        room,
-    });
-    return room;
+    // const room = await roomServices.create(connectionId, owner, members, 'PRIVATE');
+
+    // await apiGWsendMessageToClient(connectionId, {
+    //     room,
+    // });
+    return {
+        room: 'Ok 1',
+    };
 });

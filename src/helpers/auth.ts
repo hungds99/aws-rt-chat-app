@@ -23,6 +23,7 @@ export const verifyJWT = (token: string): Promise<any> => {
 };
 
 export const JWTIAMPolicy = (principalId: string, effect: 'Allow' | 'Block', resource: string, user?: User) => {
+    console.info(`principalId: ${principalId}, effect: ${effect}, resource: ${resource}`);
     return {
         principalId: principalId,
         policyDocument: {

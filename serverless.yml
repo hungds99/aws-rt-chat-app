@@ -60,6 +60,10 @@ provider:
         MAIN_TABLE: ${self:custom.tableName}
 
 functions:
+    # Authorizer API
+    customAuthorizer:
+        handler: './src/handlers/auth/index.authorizer'
+
     # Auth API
     login:
         handler: './src/handlers/auth/index.login'
@@ -73,10 +77,6 @@ functions:
             - httpApi:
                   path: /auth/register
                   method: post
-
-    # Authorizer API
-    customAuthorizer:
-        handler: './src/handlers/auth/index.authorizer'
 
     # USERS API
     getUsers:
@@ -102,19 +102,22 @@ functions:
         events:
             - websocket:
                   route: $connect
+                  authorizer: customAuthorizer
                   routeResponseSelectionExpression: $default
     wsOnDisconnect:
         handler: './src/handlers/ws/index.wsOnDisconnect'
         events:
             - websocket:
                   route: $disconnect
+                  authorizer: customAuthorizer
                   routeResponseSelectionExpression: $default
+
     wsDefault:
         handler: './src/handlers/ws/index.wsDefault'
         events:
             - websocket:
                   route: $default
-                  routeResponseSelectionExpression: $default
+                  authorizer: customAuthorizer
 
     # CHAT WEBSOCKET API
     wsOnCreateRoom:
@@ -122,7 +125,9 @@ functions:
         events:
             - websocket:
                   route: createRoom
+                  authorizer: customAuthorizer
                   routeResponseSelectionExpression: $default
+
 resources:
     Resources:
         MainTable:

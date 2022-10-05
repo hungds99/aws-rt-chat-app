@@ -18,9 +18,10 @@ export const register = WrapperHandler(async (event: any) => {
 
 export const authorizer = async (event: any) => {
     const { authorizationToken } = event;
-    const token = authorizationToken.split(' ')[1];
+    // Get token from header with format: Bearer <token> [RestAPI vs WebSocket]
+    const bearerToken = authorizationToken ? authorizationToken.split(' ')[1] : event?.headers?.authorizationToken;
     try {
-        const user = await authServices.authorizer(token);
+        const user = await authServices.authorizer(bearerToken);
         return JWTIAMPolicy(user.userId, 'Allow', event.methodArn, { ...user });
     } catch (error) {
         console.warn('Error authorizing user : ', error);
