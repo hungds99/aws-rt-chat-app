@@ -6,6 +6,7 @@ const authServices = new AuthServices();
 
 export const login = WrapperHandler(async (event: any) => {
     const { email, password } = JSON.parse(event.body);
+
     const user = await authServices.login(email, password);
     return user;
 });

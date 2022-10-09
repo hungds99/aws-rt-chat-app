@@ -95,6 +95,31 @@ functions:
                   method: get
                   authorizer:
                       name: customAuthorizer
+    # ROOMS API
+    getRooms:
+        handler: './src/handlers/rooms/index.getRooms'
+        events:
+            - httpApi:
+                  path: /rooms
+                  method: get
+                  authorizer:
+                      name: customAuthorizer
+    getRoom:
+        handler: './src/handlers/rooms/index.getRoom'
+        events:
+            - httpApi:
+                  path: /rooms/{id}
+                  method: get
+                  authorizer:
+                      name: customAuthorizer
+    getMessages:
+        handler: './src/handlers/rooms/index.getMessages'
+        events:
+            - httpApi:
+                  path: /rooms/{id}/messages
+                  method: get
+                  authorizer:
+                      name: customAuthorizer
 
     # WEBSOCKET API
     wsOnConnect:
@@ -121,7 +146,7 @@ functions:
 
     # CHAT WEBSOCKET API
     wsOnCreateRoom:
-        handler: './src/handlers/ws/room/index.wsOnCreateRoom'
+        handler: './src/handlers/rooms/index.wsOnCreateRoom'
         events:
             - websocket:
                   route: createRoom

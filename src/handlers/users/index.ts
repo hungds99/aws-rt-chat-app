@@ -8,12 +8,6 @@ export const getUsers = WrapperHandler(async (event: any) => {
     return users;
 });
 
-export const createUser = WrapperHandler(async (event: any) => {
-    const { username, email } = JSON.parse(event.body);
-    const user = await userServices.create(username, email);
-    return user;
-});
-
 export const getUser = WrapperHandler(async (event: any) => {
     const { id } = event.pathParameters;
     const user = await userServices.findById(id);

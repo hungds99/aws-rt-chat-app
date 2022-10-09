@@ -1,18 +1,35 @@
 import { WrapperHandler } from '../../common/wrapper-handler';
+import { UserServices } from '../users/user.service';
+
+const userServices = new UserServices();
 
 export const wsOnConnect = WrapperHandler(async (event: any) => {
-    const connectionId = event.requestContext.connectionId;
+    const {
+        connectionId,
+        authorizer: { userId },
+    } = event.requestContext;
+
+    await userServices.updateConnectionId(userId, connectionId);
+
     return {
-        statusCode: 200,
-        body: `${connectionId} are connected!`,
+        userId,
+        connectionId,
+        message: `User ${userId} connected in connection ${connectionId}`,
     };
 });
 
 export const wsOnDisconnect = WrapperHandler(async (event: any) => {
-    const connectionId = event.requestContext.connectionId;
+    const {
+        connectionId,
+        authorizer: { userId },
+    } = event.requestContext;
+
+    await userServices.updateConnectionId(userId, null);
+
     return {
-        statusCode: 200,
-        body: `${connectionId} are disconnected!`,
+        userId,
+        connectionId,
+        message: `User ${userId} disconnected in connection ${connectionId}`,
     };
 });
 

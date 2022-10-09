@@ -5,14 +5,58 @@ import { Config } from '../../configs';
 import { DBClient } from '../../configs/dbClient';
 import { User } from './user.model';
 
-export interface UserServices {
+export interface IUserServices {
+    findByIds(ids: string[]): Promise<User[]>;
+    updateConnectionId(id: string, connectionId: string): Promise<void>;
     findDetailByEmail(email: string, isAdmin: boolean): Promise<User>;
     findByEmail(email: string): Promise<String>;
     findAll(): Promise<User[]>;
     findById(id: string): Promise<User>;
 }
 
-export class UserServices implements UserServices {
+export class UserServices implements IUserServices {
+    async findByIds(ids: string[]): Promise<User[]> {
+        const params = {
+            RequestItems: {
+                [Config.dynamodb.MAIN_TABLE]: {
+                    Keys: ids.map((id) => ({
+                        pk: `USER#${id}`,
+                        sk: `META`,
+                    })),
+                },
+            },
+        };
+
+        const result = await DBClient.batchGet(params).promise();
+        const users: User[] = plainToInstance(User, result?.Responses?.[Config.dynamodb.MAIN_TABLE], {
+            excludeExtraneousValues: true,
+        });
+        return users;
+    }
+
+    async updateConnectionId(id: string, connectionId: string): Promise<void> {
+        const params: DocumentClient.UpdateItemInput = {
+            TableName: Config.dynamodb.MAIN_TABLE,
+            Key: {
+                pk: `USER#${id}`,
+                sk: `META`,
+            },
+            UpdateExpression: 'SET #connectionId = :connectionId',
+            ExpressionAttributeValues: {
+                ':connectionId': connectionId,
+            },
+            ExpressionAttributeNames: {
+                '#connectionId': 'connectionId',
+            },
+        };
+
+        try {
+            await DBClient.update(params).promise();
+        } catch (error) {
+            throw new InternalServerError(error);
+        }
+    }
+
     async findDetailByEmail(email: string, isAdmin: boolean = false): Promise<User> {
         const userId = await this.findByEmail(email);
         try {
@@ -85,15 +129,12 @@ export class UserServices implements UserServices {
             },
         };
 
-        try {
-            const result = await DBClient.get(params).promise();
-            const user = plainToInstance(User, result?.Item, {
-                excludeExtraneousValues: true,
-            });
-            if (!user) throw new NotFoundException('User not found');
-            return user;
-        } catch (error) {
-            throw new InternalServerError(error);
-        }
+        const result = await DBClient.get(params).promise();
+        const user = plainToInstance(User, result?.Item, {
+            excludeExtraneousValues: true,
+        });
+        if (!user) throw new NotFoundException('User not found');
+
+        return user;
     }
 }

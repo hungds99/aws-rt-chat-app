@@ -10,7 +10,8 @@
         "experimentalDecorators": true,
         "jsx": "react",
         "outDir": "lib",
-        "noUnusedLocals": false
+        "noUnusedLocals": false,
+        "downlevelIteration": true
     },
     "exclude": ["node_modules", "static", "lib"],
     "include": ["src/**/*.ts"]

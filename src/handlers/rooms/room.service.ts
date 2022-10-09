@@ -1,12 +1,13 @@
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { plainToInstance } from 'class-transformer';
-import { BadRequestException } from '../../common/exceptions';
+import { BadRequestException, NotFoundException } from '../../common/exceptions';
 import { DBClient } from '../../configs/dbClient';
 import { validateSchema } from '../../helpers/validate';
 import { Room } from './room.model';
 import { NewRoomSchema } from './room.schema';
 
-export interface RoomServices {
+export interface IRoomServices {
+    findAll(): Promise<Room[]>;
     create(connectionId: string, owner: string, members: string[], type: 'GROUP' | 'PRIVATE'): Promise<Room>;
     createPrivate(room: Room): Promise<Room>;
     createGroup(room: Room): Promise<Room>;
@@ -15,7 +16,27 @@ export interface RoomServices {
     findByUserId(userId: string): Promise<Room[]>;
 }
 
-export class RoomServices implements RoomServices {
+export class RoomServices implements IRoomServices {
+    async findAll(): Promise<Room[]> {
+        const params: DocumentClient.ScanInput = {
+            TableName: process.env.MAIN_TABLE,
+            FilterExpression: 'begins_with(#pk, :pk) AND #sk = :sk',
+            ExpressionAttributeNames: {
+                '#pk': 'pk',
+                '#sk': 'sk',
+            },
+            ExpressionAttributeValues: {
+                ':pk': 'ROOM#',
+                ':sk': 'META',
+            },
+        };
+        const result = await DBClient.scan(params).promise();
+        const rooms = plainToInstance(Room, result.Items, {
+            excludeExtraneousValues: true,
+        });
+        return rooms;
+    }
+
     async create(connectionId: string, owner: string, members: string[], type: 'GROUP' | 'PRIVATE'): Promise<Room> {
         await validateSchema(NewRoomSchema, { owner, members, type });
         const now = new Date().getTime();
@@ -162,9 +183,9 @@ export class RoomServices implements RoomServices {
                 sk: `META`,
             },
         };
-
         const result = await DBClient.get(params).promise();
         const room = plainToInstance(Room, result.Item);
+        if (!room) throw new NotFoundException('Room not found');
         return room;
     }
 

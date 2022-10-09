@@ -6,6 +6,9 @@ export class User extends Base {
     userId: string;
 
     @Expose()
+    connectionId?: string;
+
+    @Expose()
     email: string;
 
     @Expose({ groups: ['admin'] })
@@ -16,9 +19,6 @@ export class User extends Base {
 
     @Expose()
     lastName: string;
-
-    @Expose()
-    username: string;
 
     @Expose()
     avatar: string;

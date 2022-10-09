@@ -15,15 +15,15 @@ import { getAvatar } from '../../helpers/utils';
 import { validateSchema } from '../../helpers/validate';
 import { AuthUser, NewUser, User } from '../users/user.model';
 import { UserServices } from '../users/user.service';
-import { RegisterUserSchema } from './auth.schema';
+import { LoginUserSchema, RegisterUserSchema } from './auth.schema';
 
-export interface AuthServices {
+export interface IAuthServices {
     authorizer(token: string): Promise<User>;
     login(email: string, password: string): Promise<AuthUser>;
     register(user: NewUser): Promise<User>;
 }
 
-export class AuthServices implements AuthServices {
+export class AuthServices implements IAuthServices {
     userServices: UserServices;
     constructor(userServices = new UserServices()) {
         this.userServices = userServices;
@@ -42,6 +42,7 @@ export class AuthServices implements AuthServices {
     }
 
     async login(email: string, password: string): Promise<AuthUser> {
+        await validateSchema(LoginUserSchema, { email, password });
         const user = await this.userServices.findDetailByEmail(email, true);
         if (!user || !bcrypt.compareSync(password, user.password)) throw new UnauthorizedException('Wrong credentials');
         try {
@@ -67,13 +68,13 @@ export class AuthServices implements AuthServices {
     async register(newUser: NewUser): Promise<User> {
         const { email, password, firstName, lastName } = newUser;
         await validateSchema(RegisterUserSchema, { ...newUser });
-        const userExisted = await this.userServices.findByEmail(email);
-        if (userExisted) throw new BadRequestException('User already exists');
+        const userIdExisted = await this.userServices.findByEmail(email);
+        if (userIdExisted) throw new BadRequestException('User already exists');
 
         try {
             const now = new Date().getTime();
             const passwordHashed = bcrypt.hashSync(password, 6);
-            const user: User = plainToInstance(User, {
+            const user: User = {
                 userId: uuidv4(),
                 firstName,
                 lastName,
@@ -83,7 +84,7 @@ export class AuthServices implements AuthServices {
                 createdAt: now,
                 updatedAt: now,
                 type: 'USER',
-            });
+            };
 
             const params: DocumentClient.TransactWriteItemsInput = {
                 TransactItems: [
@@ -114,7 +115,7 @@ export class AuthServices implements AuthServices {
                 ],
             };
             await DBClient.transactWrite(params).promise();
-            return user;
+            return plainToInstance(User, user, { excludeExtraneousValues: true });
         } catch (error) {
             throw new InternalServerError(error);
         }

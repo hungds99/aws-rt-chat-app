@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { Base } from '../../common/model';
+import { Base } from '../../../common/model';
 
 export class Message extends Base {
     @Expose()
