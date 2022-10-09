@@ -1,12 +1,16 @@
 {
     "name": "aws-rt-chat-app",
     "version": "1.0.0",
-    "description": "Realtime chat app using AWS",
+    "author": {
+        "name": "Hung Dinh S.",
+        "email": "dinhsyhung99@gmail.com"
+    },
+    "description": "AWS Realtime Chat App",
     "scripts": {
         "test": "jest --coverage",
         "deploy": "serverless deploy",
         "start": "export AWS_PROFILE=local && docker-compose up -d",
-        "build:db": "aws dynamodb create-table --cli-input-json file://data/main-table.json --endpoint-url http://localhost:8000",
+        "build:db": "aws dynamodb create-table --cli-input-json file://database/main-table.json --endpoint-url http://localhost:8000",
         "serve": "sls offline",
         "serve:watch": "nodemon -e js,ts,jsx,tsx -x npm run serve"
     },

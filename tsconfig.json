@@ -1,6 +1,13 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
+        "baseUrl": "./src",
+        "paths": {
+            "@common/*": ["common/*"],
+            "@configs/*": ["configs/*"],
+            "@handlers/*": ["handlers/*"],
+            "@helpers/*": ["helpers/*"]
+        },
         "module": "esnext",
         "moduleResolution": "node",
         "target": "es5",
@@ -14,5 +21,5 @@
         "downlevelIteration": true
     },
     "exclude": ["node_modules", "static", "lib"],
-    "include": ["src/**/*.ts"]
+    "include": ["src", "src/**/*.ts"]
 }

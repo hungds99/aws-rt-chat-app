@@ -3,7 +3,7 @@ import { Base } from '../../../common/model';
 
 export class Message extends Base {
     @Expose()
-    messageId: string;
+    id: string;
 
     @Expose()
     roomId: string;

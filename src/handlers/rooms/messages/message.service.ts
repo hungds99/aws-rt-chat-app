@@ -1,6 +1,7 @@
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { plainToInstance } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
+import { ENV } from '../../../common/environment';
 import { NotFoundException } from '../../../common/exceptions';
 import { DBClient } from '../../../configs/dbClient';
 import { validateSchema } from '../../../helpers/validate';
@@ -16,17 +17,15 @@ export interface IMessageServices {
 export class MessageServices implements IMessageServices {
     roomServices: IRoomServices;
 
-    constructor(roomServices = new RoomServices()) {
+    constructor(roomServices: IRoomServices = new RoomServices()) {
         this.roomServices = roomServices;
     }
 
     async create(roomId: string, owner: string, content: string): Promise<Message> {
         await validateSchema(NewMessageSchema, { roomId, owner, content });
-        const room = await this.roomServices.findById(roomId);
-        if (!room) throw new NotFoundException(`Room #${roomId} not found`);
         const now = new Date().getTime();
         const message = plainToInstance(Message, {
-            messageId: uuidv4(),
+            id: uuidv4(),
             roomId,
             owner,
             content,
@@ -34,22 +33,40 @@ export class MessageServices implements IMessageServices {
             updatedAt: now,
             type: 'MESSAGE',
         });
-        const params: DocumentClient.BatchWriteItemInput = {
-            RequestItems: {
-                MAIN_TABLE: [
-                    {
-                        PutRequest: {
-                            Item: {
-                                pk: `ROOM#${roomId}`,
-                                sk: `MESSAGE#${message.createdAt}`,
+
+        const params: DocumentClient.TransactWriteItemsInput = {
+            TransactItems: [
+                {
+                    Put: {
+                        TableName: ENV.MAIN_TABLE,
+                        Item: {
+                            pk: `ROOM#${roomId}`,
+                            sk: `MESSAGE#${message.createdAt}`,
+                            ...message,
+                        },
+                    },
+                    Update: {
+                        TableName: ENV.MAIN_TABLE,
+                        Key: {
+                            pk: `ROOM#${roomId}`,
+                            sk: `META`,
+                        },
+                        UpdateExpression: 'SET #updatedAt = :updatedAt ADD #lastMessage :lastMessage',
+                        ExpressionAttributeNames: {
+                            '#updatedAt': 'updatedAt',
+                            '#lastMessage': 'lastMessage',
+                        },
+                        ExpressionAttributeValues: {
+                            ':updatedAt': now,
+                            ':lastMessage': {
                                 ...message,
                             },
                         },
                     },
-                ],
-            },
+                },
+            ],
         };
-        await DBClient.batchWrite(params).promise();
+        await DBClient.transactWrite(params).promise();
         return message;
     }
 
@@ -57,7 +74,7 @@ export class MessageServices implements IMessageServices {
         const room = await this.roomServices.findById(roomId);
         if (!room) throw new NotFoundException(`Room #${roomId} not found`);
         const params: DocumentClient.QueryInput = {
-            TableName: process.env.MAIN_TABLE,
+            TableName: ENV.MAIN_TABLE,
             KeyConditionExpression: 'pk = :pk and begins_with(sk, :sk)',
             ExpressionAttributeValues: {
                 ':pk': `ROOM#${roomId}`,

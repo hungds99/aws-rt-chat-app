@@ -1,10 +1,11 @@
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { ENV } from '../common/environment';
 
-const options = !process.env.NODE_ENV
+const options = !ENV.NODE_ENV
     ? {
-          region: 'ap-southeast-1',
-          endpoint: 'http://localhost:8000',
+          region: ENV.AWS_REGION,
+          endpoint: ENV.AWS_DYNAMODB_ENDPOINT,
       }
-    : { region: 'ap-southeast-1' };
+    : { region: ENV.AWS_REGION };
 
 export const DBClient: DocumentClient = new DocumentClient({ ...options });

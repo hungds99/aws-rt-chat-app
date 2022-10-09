@@ -1,15 +1,20 @@
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { plainToInstance } from 'class-transformer';
+import { v4 as uuidv4 } from 'uuid';
+import { ENV } from '../../common/environment';
 import { BadRequestException, NotFoundException } from '../../common/exceptions';
 import { DBClient } from '../../configs/dbClient';
+import { chunkDBQueryIDsInOperator } from '../../helpers/utils';
 import { validateSchema } from '../../helpers/validate';
+import { IUserServices, UserServices } from '../users/user.service';
 import { Room } from './room.model';
 import { NewRoomSchema } from './room.schema';
 
 export interface IRoomServices {
+    findByIds(ids: string[]): Promise<Room[]>;
     findAll(): Promise<Room[]>;
-    create(connectionId: string, owner: string, members: string[], type: 'GROUP' | 'PRIVATE'): Promise<Room>;
-    createPrivate(room: Room): Promise<Room>;
+    create(owner: string, members: string[], type: 'GROUP' | 'PRIVATE'): Promise<{ room: Room; isExisted: boolean }>;
+    createPrivate(room: Room): Promise<{ room: Room; isExisted: boolean }>;
     createGroup(room: Room): Promise<Room>;
     findPrivate(memberIds: string[]): Promise<Room>;
     findById(roomId: string): Promise<Room>;
@@ -17,9 +22,41 @@ export interface IRoomServices {
 }
 
 export class RoomServices implements IRoomServices {
+    userServices: IUserServices;
+
+    constructor(userServices: IUserServices = new UserServices()) {
+        this.userServices = userServices;
+    }
+
+    async findByIds(ids: string[]): Promise<Room[]> {
+        if (ids.length === 0) return [];
+        const { chunkedExpressionAttributeValues, chunkedFilterExpression } = chunkDBQueryIDsInOperator(ids);
+
+        const params: DocumentClient.QueryInput = {
+            TableName: ENV.MAIN_TABLE,
+            IndexName: 'gsi1',
+            KeyConditionExpression: '#gsi1pk = :gsi1pk AND begins_with(#gsi1sk, :gsi1sk)',
+            ExpressionAttributeNames: {
+                '#gsi1pk': 'gsi1pk',
+                '#gsi1sk': 'gsi1sk',
+            },
+            ExpressionAttributeValues: {
+                ':gsi1pk': 'ROOMS',
+                ':gsi1sk': 'UPDATED_AT#',
+                ...chunkedExpressionAttributeValues,
+            },
+            FilterExpression: chunkedFilterExpression,
+        };
+        const result = await DBClient.query(params).promise();
+        const rooms = plainToInstance(Room, result.Items, {
+            excludeExtraneousValues: true,
+        });
+        return rooms;
+    }
+
     async findAll(): Promise<Room[]> {
         const params: DocumentClient.ScanInput = {
-            TableName: process.env.MAIN_TABLE,
+            TableName: ENV.MAIN_TABLE,
             FilterExpression: 'begins_with(#pk, :pk) AND #sk = :sk',
             ExpressionAttributeNames: {
                 '#pk': 'pk',
@@ -37,11 +74,15 @@ export class RoomServices implements IRoomServices {
         return rooms;
     }
 
-    async create(connectionId: string, owner: string, members: string[], type: 'GROUP' | 'PRIVATE'): Promise<Room> {
+    async create(
+        owner: string,
+        members: string[],
+        type: 'GROUP' | 'PRIVATE',
+    ): Promise<{ room: Room; isExisted: boolean }> {
         await validateSchema(NewRoomSchema, { owner, members, type });
         const now = new Date().getTime();
         const room = plainToInstance(Room, {
-            roomId: connectionId,
+            roomId: uuidv4(),
             owner,
             members,
             type: type === 'GROUP' ? 'GROUP_ROOM' : 'PRIVATE_ROOM',
@@ -49,9 +90,18 @@ export class RoomServices implements IRoomServices {
             updatedAt: now,
         });
 
-        type === 'PRIVATE' ? await this.createPrivate(room) : await this.createGroup(room);
+        const users = await this.userServices.findByIds(members);
+        if (users.length !== members.length) throw new BadRequestException('User not found');
 
-        return room;
+        if (type === 'PRIVATE') {
+            const result = await this.createPrivate(room);
+            return {
+                ...result,
+            };
+        } else {
+            const result = await this.createGroup(room);
+            return { room: result, isExisted: false };
+        }
     }
 
     async createGroup(room: Room): Promise<Room> {
@@ -63,6 +113,8 @@ export class RoomServices implements IRoomServices {
                             Item: {
                                 pk: `ROOM#${room.roomId}`,
                                 sk: `META`,
+                                gsi1pk: `ROOMS`,
+                                gsi1sk: `UPDATED_AT#${room.updatedAt}`,
                                 ...room,
                             },
                         },
@@ -72,8 +124,11 @@ export class RoomServices implements IRoomServices {
                             Item: {
                                 pk: `ROOM#${room.roomId}`,
                                 sk: `MEMBER#${userId}`,
-                                gsi1pk: `USER#${userId}`,
+                                gsi1pk: `MEMBER#${userId}`,
                                 gsi1sk: `ROOM#${room.roomId}`,
+                                roomId: room.roomId,
+                                userId: userId,
+                                createdAt: room.createdAt,
                             },
                         },
                     })),
@@ -86,10 +141,10 @@ export class RoomServices implements IRoomServices {
         return room;
     }
 
-    async createPrivate(room: Room): Promise<Room> {
+    async createPrivate(room: Room): Promise<{ room: Room; isExisted: boolean }> {
         if (room.members.length !== 2) throw new BadRequestException('Private room can only have 2 users');
         const roomExisted = await this.findPrivate(room.members);
-        if (roomExisted) return roomExisted;
+        if (roomExisted) return { room: roomExisted, isExisted: true };
 
         const params: DocumentClient.BatchWriteItemInput = {
             RequestItems: {
@@ -99,6 +154,8 @@ export class RoomServices implements IRoomServices {
                             Item: {
                                 pk: `ROOM#${room.roomId}`,
                                 sk: `META`,
+                                gsi1pk: `ROOMS`,
+                                gsi1sk: `UPDATED_AT#${room.updatedAt}`,
                                 ...room,
                             },
                         },
@@ -108,7 +165,7 @@ export class RoomServices implements IRoomServices {
                             Item: {
                                 pk: `ROOM#${room.roomId}`,
                                 sk: `MEMBER#${room.members[0]}`,
-                                gsi1pk: `USER#${room.members[0]}`,
+                                gsi1pk: `MEMBER#${room.members[0]}`,
                                 gsi1sk: `ROOM#${room.roomId}`,
                             },
                         },
@@ -118,7 +175,7 @@ export class RoomServices implements IRoomServices {
                             Item: {
                                 pk: `ROOM#${room.roomId}`,
                                 sk: `MEMBER#${room.members[1]}`,
-                                gsi1pk: `USER#${room.members[1]}`,
+                                gsi1pk: `MEMBER#${room.members[1]}`,
                                 gsi1sk: `ROOM#${room.roomId}`,
                             },
                         },
@@ -129,7 +186,6 @@ export class RoomServices implements IRoomServices {
                                 pk: `PRIVATE_ROOM#${room.members[0]}`,
                                 sk: `PRIVATE_ROOM#${room.members[1]}`,
                                 roomId: room.roomId,
-                                createdAt: room.createdAt,
                             },
                         },
                     },
@@ -139,7 +195,6 @@ export class RoomServices implements IRoomServices {
                                 pk: `PRIVATE_ROOM#${room.members[1]}`,
                                 sk: `PRIVATE_ROOM#${room.members[0]}`,
                                 roomId: room.roomId,
-                                createdAt: room.createdAt,
                             },
                         },
                     },
@@ -149,7 +204,7 @@ export class RoomServices implements IRoomServices {
 
         await DBClient.batchWrite(params).promise();
 
-        return room;
+        return { room, isExisted: false };
     }
 
     async findPrivate(members: string[]): Promise<Room> {
@@ -171,7 +226,9 @@ export class RoomServices implements IRoomServices {
         };
 
         const result = await DBClient.batchGet(params).promise();
-        const room = plainToInstance(Room, result.Responses.MAIN_TABLE[0]);
+        const room = plainToInstance(Room, result.Responses.MAIN_TABLE[0], {
+            excludeExtraneousValues: true,
+        });
         return room;
     }
 
@@ -195,12 +252,12 @@ export class RoomServices implements IRoomServices {
             IndexName: 'gsi1',
             KeyConditionExpression: 'gsi1pk = :pk AND begins_with(gsi1sk, :sk)',
             ExpressionAttributeValues: {
-                ':pk': `USER#${userId}`,
+                ':pk': `MEMBER#${userId}`,
                 ':sk': 'ROOM#',
             },
         };
         const result = await DBClient.query(params).promise();
-        const rooms = plainToInstance(Room, result.Items);
+        const rooms = await this.findByIds(result.Items.map((item) => item.gsi1sk.split('#')[1]));
         return rooms;
     }
 }

@@ -1,5 +1,6 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { Base } from '../../common/model';
+import { Message } from './messages/message.model';
 
 export class Room extends Base {
     @Expose()
@@ -13,6 +14,9 @@ export class Room extends Base {
 
     @Expose()
     members: string[];
+
+    @Type(() => Message)
+    lastMessage: Message;
 
     @Expose()
     type: 'GROUP_ROOM' | 'PRIVATE_ROOM';

@@ -1,7 +1,7 @@
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { plainToInstance } from 'class-transformer';
+import { ENV } from '../../common/environment';
 import { InternalServerError, NotFoundException } from '../../common/exceptions';
-import { Config } from '../../configs';
 import { DBClient } from '../../configs/dbClient';
 import { User } from './user.model';
 
@@ -18,7 +18,7 @@ export class UserServices implements IUserServices {
     async findByIds(ids: string[]): Promise<User[]> {
         const params = {
             RequestItems: {
-                [Config.dynamodb.MAIN_TABLE]: {
+                [ENV.MAIN_TABLE]: {
                     Keys: ids.map((id) => ({
                         pk: `USER#${id}`,
                         sk: `META`,
@@ -28,7 +28,7 @@ export class UserServices implements IUserServices {
         };
 
         const result = await DBClient.batchGet(params).promise();
-        const users: User[] = plainToInstance(User, result?.Responses?.[Config.dynamodb.MAIN_TABLE], {
+        const users: User[] = plainToInstance(User, result?.Responses?.[ENV.MAIN_TABLE], {
             excludeExtraneousValues: true,
         });
         return users;
@@ -36,7 +36,7 @@ export class UserServices implements IUserServices {
 
     async updateConnectionId(id: string, connectionId: string): Promise<void> {
         const params: DocumentClient.UpdateItemInput = {
-            TableName: Config.dynamodb.MAIN_TABLE,
+            TableName: ENV.MAIN_TABLE,
             Key: {
                 pk: `USER#${id}`,
                 sk: `META`,
@@ -61,7 +61,7 @@ export class UserServices implements IUserServices {
         const userId = await this.findByEmail(email);
         try {
             const params: DocumentClient.GetItemInput = {
-                TableName: Config.dynamodb.MAIN_TABLE,
+                TableName: ENV.MAIN_TABLE,
                 Key: {
                     pk: `USER#${userId}`,
                     sk: `META`,
@@ -81,7 +81,7 @@ export class UserServices implements IUserServices {
     async findByEmail(email: string): Promise<String> {
         try {
             const params: DocumentClient.GetItemInput = {
-                TableName: Config.dynamodb.MAIN_TABLE,
+                TableName: ENV.MAIN_TABLE,
                 Key: {
                     pk: `EMAIL#${email}`,
                     sk: `EMAIL`,
@@ -98,7 +98,7 @@ export class UserServices implements IUserServices {
     async findAll(): Promise<User[]> {
         try {
             const params: DocumentClient.QueryInput = {
-                TableName: Config.dynamodb.MAIN_TABLE,
+                TableName: ENV.MAIN_TABLE,
                 IndexName: 'gsi1',
                 KeyConditionExpression: '#gsi1pk = :gsi1pk',
                 ExpressionAttributeValues: {
@@ -122,7 +122,7 @@ export class UserServices implements IUserServices {
 
     async findById(id: string): Promise<User> {
         const params = {
-            TableName: Config.dynamodb.MAIN_TABLE,
+            TableName: ENV.MAIN_TABLE,
             Key: {
                 pk: `USER#${id}`,
                 sk: `META`,
@@ -134,7 +134,6 @@ export class UserServices implements IUserServices {
             excludeExtraneousValues: true,
         });
         if (!user) throw new NotFoundException('User not found');
-
         return user;
     }
 }

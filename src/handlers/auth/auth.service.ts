@@ -2,19 +2,14 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import * as bcrypt from 'bcryptjs';
 import { plainToInstance } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
-import {
-    BadRequestException,
-    InternalServerError,
-    NotFoundException,
-    UnauthorizedException,
-} from '../../common/exceptions';
-import { Config } from '../../configs';
+import { ENV } from '../../common/environment';
+import { BadRequestException, InternalServerError, UnauthorizedException } from '../../common/exceptions';
 import { DBClient } from '../../configs/dbClient';
 import { generateJWT, verifyJWT } from '../../helpers/auth';
 import { getAvatar } from '../../helpers/utils';
 import { validateSchema } from '../../helpers/validate';
 import { AuthUser, NewUser, User } from '../users/user.model';
-import { UserServices } from '../users/user.service';
+import { IUserServices, UserServices } from '../users/user.service';
 import { LoginUserSchema, RegisterUserSchema } from './auth.schema';
 
 export interface IAuthServices {
@@ -24,21 +19,17 @@ export interface IAuthServices {
 }
 
 export class AuthServices implements IAuthServices {
-    userServices: UserServices;
-    constructor(userServices = new UserServices()) {
+    userServices: IUserServices;
+
+    constructor(userServices: IUserServices = new UserServices()) {
         this.userServices = userServices;
     }
 
     async authorizer(token: string): Promise<User> {
-        try {
-            const tokenDecoded = await verifyJWT(token);
-            if (!tokenDecoded) throw new UnauthorizedException('Invalid token');
-            const user = plainToInstance(User, tokenDecoded?.user);
-            if (!user) throw new NotFoundException('User not found');
-            return user;
-        } catch (error) {
-            throw new InternalServerError(error);
-        }
+        const tokenDecoded = await verifyJWT(token);
+        if (!tokenDecoded) throw new UnauthorizedException('Invalid token');
+        const user = await this.userServices.findById(tokenDecoded?.user?.userId);
+        return user;
     }
 
     async login(email: string, password: string): Promise<AuthUser> {
@@ -90,7 +81,7 @@ export class AuthServices implements IAuthServices {
                 TransactItems: [
                     {
                         Put: {
-                            TableName: Config.dynamodb.MAIN_TABLE,
+                            TableName: ENV.MAIN_TABLE,
                             ConditionExpression: 'attribute_not_exists(pk)',
                             Item: {
                                 pk: `USER#${user.userId}`,
@@ -103,7 +94,7 @@ export class AuthServices implements IAuthServices {
                     },
                     {
                         Put: {
-                            TableName: Config.dynamodb.MAIN_TABLE,
+                            TableName: ENV.MAIN_TABLE,
                             ConditionExpression: 'attribute_not_exists(pk)',
                             Item: {
                                 pk: `EMAIL#${email}`,

@@ -152,6 +152,13 @@ functions:
                   route: createRoom
                   authorizer: customAuthorizer
                   routeResponseSelectionExpression: $default
+    wsOnCreateMessage:
+        handler: './src/handlers/rooms/index.wsOnCreateMessage'
+        events:
+            - websocket:
+                  route: createMessage
+                  authorizer: customAuthorizer
+                  routeResponseSelectionExpression: $default
 
 resources:
     Resources:
