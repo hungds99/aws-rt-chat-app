@@ -82,7 +82,7 @@ export class RoomServices implements IRoomServices {
         await validateSchema(NewRoomSchema, { owner, members, type });
         const now = new Date().getTime();
         const room = plainToInstance(Room, {
-            roomId: uuidv4(),
+            id: uuidv4(),
             owner,
             members,
             type: type === 'GROUP' ? 'GROUP_ROOM' : 'PRIVATE_ROOM',
@@ -111,7 +111,7 @@ export class RoomServices implements IRoomServices {
                     {
                         PutRequest: {
                             Item: {
-                                pk: `ROOM#${room.roomId}`,
+                                pk: `ROOM#${room.id}`,
                                 sk: `META`,
                                 gsi1pk: `ROOMS`,
                                 gsi1sk: `UPDATED_AT#${room.updatedAt}`,
@@ -122,11 +122,11 @@ export class RoomServices implements IRoomServices {
                     ...[...room.members].map((userId) => ({
                         PutRequest: {
                             Item: {
-                                pk: `ROOM#${room.roomId}`,
+                                pk: `ROOM#${room.id}`,
                                 sk: `MEMBER#${userId}`,
                                 gsi1pk: `MEMBER#${userId}`,
-                                gsi1sk: `ROOM#${room.roomId}`,
-                                roomId: room.roomId,
+                                gsi1sk: `ROOM#${room.id}`,
+                                id: room.id,
                                 userId: userId,
                                 createdAt: room.createdAt,
                             },
@@ -152,7 +152,7 @@ export class RoomServices implements IRoomServices {
                     {
                         PutRequest: {
                             Item: {
-                                pk: `ROOM#${room.roomId}`,
+                                pk: `ROOM#${room.id}`,
                                 sk: `META`,
                                 gsi1pk: `ROOMS`,
                                 gsi1sk: `UPDATED_AT#${room.updatedAt}`,
@@ -163,20 +163,20 @@ export class RoomServices implements IRoomServices {
                     {
                         PutRequest: {
                             Item: {
-                                pk: `ROOM#${room.roomId}`,
+                                pk: `ROOM#${room.id}`,
                                 sk: `MEMBER#${room.members[0]}`,
                                 gsi1pk: `MEMBER#${room.members[0]}`,
-                                gsi1sk: `ROOM#${room.roomId}`,
+                                gsi1sk: `ROOM#${room.id}`,
                             },
                         },
                     },
                     {
                         PutRequest: {
                             Item: {
-                                pk: `ROOM#${room.roomId}`,
+                                pk: `ROOM#${room.id}`,
                                 sk: `MEMBER#${room.members[1]}`,
                                 gsi1pk: `MEMBER#${room.members[1]}`,
-                                gsi1sk: `ROOM#${room.roomId}`,
+                                gsi1sk: `ROOM#${room.id}`,
                             },
                         },
                     },
@@ -185,7 +185,7 @@ export class RoomServices implements IRoomServices {
                             Item: {
                                 pk: `PRIVATE_ROOM#${room.members[0]}`,
                                 sk: `PRIVATE_ROOM#${room.members[1]}`,
-                                roomId: room.roomId,
+                                roomId: room.id,
                             },
                         },
                     },
@@ -194,7 +194,7 @@ export class RoomServices implements IRoomServices {
                             Item: {
                                 pk: `PRIVATE_ROOM#${room.members[1]}`,
                                 sk: `PRIVATE_ROOM#${room.members[0]}`,
-                                roomId: room.roomId,
+                                roomId: room.id,
                             },
                         },
                     },

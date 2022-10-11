@@ -4,7 +4,7 @@ import { Message } from './messages/message.model';
 
 export class Room extends Base {
     @Expose()
-    roomId: string;
+    id: string;
 
     @Expose()
     roomName: string;

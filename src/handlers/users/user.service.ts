@@ -89,7 +89,7 @@ export class UserServices implements IUserServices {
             };
             const result = await DBClient.get(params).promise();
             const user = plainToInstance(User, result?.Item);
-            return user?.userId || '';
+            return user?.id || '';
         } catch (error) {
             throw new InternalServerError(error);
         }

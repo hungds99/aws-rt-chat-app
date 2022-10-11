@@ -23,7 +23,7 @@ export const authorizer = async (event: any) => {
     const bearerToken = authorizationToken ? authorizationToken.split(' ')[1] : event?.headers?.authorizationToken;
     try {
         const user = await authServices.authorizer(bearerToken);
-        return JWTIAMPolicy(user.userId, 'Allow', event.methodArn, { ...user });
+        return JWTIAMPolicy(user.id, 'Allow', event.methodArn, { ...user });
     } catch (error) {
         console.warn('Error authorizing user : ', error);
         return JWTIAMPolicy('ERROR', 'Block', event.methodArn);

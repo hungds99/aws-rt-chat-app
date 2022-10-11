@@ -66,7 +66,7 @@ export class AuthServices implements IAuthServices {
             const now = new Date().getTime();
             const passwordHashed = bcrypt.hashSync(password, 6);
             const user: User = {
-                userId: uuidv4(),
+                id: uuidv4(),
                 firstName,
                 lastName,
                 email,
@@ -84,7 +84,7 @@ export class AuthServices implements IAuthServices {
                             TableName: ENV.MAIN_TABLE,
                             ConditionExpression: 'attribute_not_exists(pk)',
                             Item: {
-                                pk: `USER#${user.userId}`,
+                                pk: `USER#${user.id}`,
                                 sk: `META`,
                                 gsi1pk: `USERS`,
                                 gsi1sk: `CREATED_AT#${user.createdAt}`,
@@ -99,7 +99,7 @@ export class AuthServices implements IAuthServices {
                             Item: {
                                 pk: `EMAIL#${email}`,
                                 sk: `EMAIL`,
-                                userId: user.userId,
+                                userId: user.id,
                             },
                         },
                     },

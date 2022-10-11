@@ -3,7 +3,7 @@ import { Base } from '../../common/model';
 
 export class User extends Base {
     @Expose()
-    userId: string;
+    id: string;
 
     @Expose()
     connectionId?: string;
