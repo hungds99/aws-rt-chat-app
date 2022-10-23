@@ -40,6 +40,7 @@ provider:
     httpApi:
         payload: '2.0'
         cors:
+            origin: '*'
             allowedHeaders:
                 - Content-Type
                 - Authorization
@@ -47,8 +48,8 @@ provider:
                 - GET
                 - POST
                 - OPTIONS
-            allowedOrigins:
-                - https://localhost:3003
+            allowedOrigins: '*'
+            allowCredentials: true
         authorizers:
             customAuthorizer:
                 type: request
@@ -127,14 +128,14 @@ functions:
         events:
             - websocket:
                   route: $connect
-                  authorizer: customAuthorizer
+                  #   authorizer: customAuthorizer
                   routeResponseSelectionExpression: $default
     wsOnDisconnect:
         handler: './src/handlers/ws/index.wsOnDisconnect'
         events:
             - websocket:
                   route: $disconnect
-                  authorizer: customAuthorizer
+                  #   authorizer: customAuthorizer
                   routeResponseSelectionExpression: $default
 
     wsDefault:
@@ -142,7 +143,7 @@ functions:
         events:
             - websocket:
                   route: $default
-                  authorizer: customAuthorizer
+                  #   authorizer: customAuthorizer
 
     # CHAT WEBSOCKET API
     wsOnCreateRoom:
@@ -150,14 +151,14 @@ functions:
         events:
             - websocket:
                   route: createRoom
-                  authorizer: customAuthorizer
+                  #   authorizer: customAuthorizer
                   routeResponseSelectionExpression: $default
     wsOnCreateMessage:
         handler: './src/handlers/rooms/index.wsOnCreateMessage'
         events:
             - websocket:
                   route: createMessage
-                  authorizer: customAuthorizer
+                  #   authorizer: customAuthorizer
                   routeResponseSelectionExpression: $default
 
 resources:

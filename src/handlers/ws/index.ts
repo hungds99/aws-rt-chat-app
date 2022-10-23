@@ -6,11 +6,10 @@ const userServices = new UserServices();
 export const wsOnConnect = WrapperHandler(async (event: any) => {
     const {
         connectionId,
-        authorizer: { userId },
+        // authorizer: { userId },
     } = event.requestContext;
-
+    const { userId } = JSON.parse(event.body);
     await userServices.updateConnectionId(userId, connectionId);
-
     return {
         userId,
         connectionId,
@@ -21,11 +20,10 @@ export const wsOnConnect = WrapperHandler(async (event: any) => {
 export const wsOnDisconnect = WrapperHandler(async (event: any) => {
     const {
         connectionId,
-        authorizer: { userId },
+        // authorizer: { userId },
     } = event.requestContext;
-
+    const { userId } = JSON.parse(event.body);
     await userServices.updateConnectionId(userId, null);
-
     return {
         userId,
         connectionId,

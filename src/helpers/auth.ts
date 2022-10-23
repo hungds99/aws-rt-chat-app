@@ -37,7 +37,7 @@ export const JWTIAMPolicy = (principalId: string, effect: 'Allow' | 'Block', res
             ],
         },
         context: {
-            userId: user?.userId,
+            userId: user?.id,
             email: user?.email,
         },
     };

@@ -37,11 +37,11 @@ export const getMessages = WrapperHandler(async (event: any) => {
 });
 
 export const wsOnCreateRoom = WrapperHandler(async (event: any, context: any) => {
+    // const {
+    //     authorizer: { userId },
+    // } = event.requestContext;
     const {
-        authorizer: { userId },
-    } = event.requestContext;
-    const {
-        room: { members },
+        room: { userId, members },
     } = JSON.parse(event.body);
 
     const { room, isExisted } = await roomServices.create(
@@ -55,17 +55,17 @@ export const wsOnCreateRoom = WrapperHandler(async (event: any, context: any) =>
 
     // Send message to all members
     const connectionIds = users
-        .map((user: User) => (user.userId !== userId ? user.connectionId : null))
+        .map((user: User) => (user.id !== userId ? user.connectionId : null))
         .filter((connectionId: string) => connectionId);
     await apiGWsendMessageToClients(connectionIds, { room: room });
     return room;
 });
 
 export const wsOnCreateMessage = WrapperHandler(async (event: any, context: any) => {
-    const {
-        authorizer: { userId },
-    } = event.requestContext;
-    const { roomId, content } = JSON.parse(event.body);
+    // const {
+    //     authorizer: { userId },
+    // } = event.requestContext;
+    const { roomId, content, userId } = JSON.parse(event.body);
 
     const room = await roomServices.findById(roomId);
     if (!room) throw new NotFoundException(`Room #${roomId} not found`);

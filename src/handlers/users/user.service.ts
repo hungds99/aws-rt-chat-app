@@ -88,8 +88,7 @@ export class UserServices implements IUserServices {
                 },
             };
             const result = await DBClient.get(params).promise();
-            const user = plainToInstance(User, result?.Item);
-            return user?.id || '';
+            return result?.Item?.userId || '';
         } catch (error) {
             throw new InternalServerError(error);
         }
@@ -121,6 +120,7 @@ export class UserServices implements IUserServices {
     }
 
     async findById(id: string): Promise<User> {
+        console.log('id: ', id);
         const params = {
             TableName: ENV.MAIN_TABLE,
             Key: {
@@ -130,6 +130,7 @@ export class UserServices implements IUserServices {
         };
 
         const result = await DBClient.get(params).promise();
+        console.log(result);
         const user = plainToInstance(User, result?.Item, {
             excludeExtraneousValues: true,
         });
