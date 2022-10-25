@@ -15,7 +15,6 @@
         "sourceMap": false,
         "declaration": true,
         "experimentalDecorators": true,
-        "jsx": "react",
         "outDir": "lib",
         "noUnusedLocals": false,
         "downlevelIteration": true

@@ -51,7 +51,7 @@ export class MessageServices implements IMessageServices {
                             pk: `ROOM#${roomId}`,
                             sk: `META`,
                         },
-                        UpdateExpression: 'SET #updatedAt = :updatedAt ADD #lastMessage :lastMessage',
+                        UpdateExpression: 'SET #updatedAt = :updatedAt, #lastMessage :lastMessage',
                         ExpressionAttributeNames: {
                             '#updatedAt': 'updatedAt',
                             '#lastMessage': 'lastMessage',

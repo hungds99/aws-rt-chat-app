@@ -18,7 +18,6 @@ export const register = WrapperHandler(async (event: any) => {
 
 export const authorizer = async (event: any) => {
     const { authorizationToken } = event;
-    console.log(event);
     // Get token from header with format: Bearer <token> [RestAPI vs WebSocket]
     const bearerToken = authorizationToken ? authorizationToken.split(' ')[1] : event?.headers?.authorizationToken;
     try {

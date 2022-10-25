@@ -38,6 +38,26 @@
                 "ReadCapacityUnits": 1,
                 "WriteCapacityUnits": 1
             }
+        },
+        {
+            "IndexName": "gsi2",
+            "KeySchema": [
+                {
+                    "AttributeName": "gsi2pk",
+                    "KeyType": "HASH"
+                },
+                {
+                    "AttributeName": "gsi2sk",
+                    "KeyType": "RANGE"
+                }
+            ],
+            "Projection": {
+                "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+                "ReadCapacityUnits": 1,
+                "WriteCapacityUnits": 1
+            }
         }
     ],
     "KeySchema": [

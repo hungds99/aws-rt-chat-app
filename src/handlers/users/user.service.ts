@@ -6,8 +6,9 @@ import { DBClient } from '../../configs/dbClient';
 import { User } from './user.model';
 
 export interface IUserServices {
+    findByConnectionId(connectionId: string): Promise<User>;
     findByIds(ids: string[]): Promise<User[]>;
-    updateConnectionId(id: string, connectionId: string): Promise<void>;
+    updateConnectionId(id: string, connectionId?: string): Promise<void>;
     findDetailByEmail(email: string, isAdmin: boolean): Promise<User>;
     findByEmail(email: string): Promise<String>;
     findAll(): Promise<User[]>;
@@ -15,6 +16,27 @@ export interface IUserServices {
 }
 
 export class UserServices implements IUserServices {
+    async findByConnectionId(connectionId: string): Promise<User> {
+        const params = {
+            TableName: ENV.MAIN_TABLE,
+            IndexName: 'gsi2',
+            KeyConditionExpression: '#gsi2pk = :gsi2pk AND begins_with(#gsi2sk,:gsi2sk)',
+            ExpressionAttributeValues: {
+                ':gsi2pk': `CONNECTION#${connectionId}`,
+                ':gsi2sk': `USER#`,
+            },
+            ExpressionAttributeNames: {
+                '#gsi2pk': 'gsi2pk',
+                '#gsi2sk': 'gsi2sk',
+            },
+        };
+        const result = await DBClient.query(params).promise();
+        const user = plainToInstance(User, result?.Items?.[0], {
+            excludeExtraneousValues: true,
+        });
+        return user;
+    }
+
     async findByIds(ids: string[]): Promise<User[]> {
         const params = {
             RequestItems: {
@@ -34,21 +56,38 @@ export class UserServices implements IUserServices {
         return users;
     }
 
-    async updateConnectionId(id: string, connectionId: string): Promise<void> {
+    async updateConnectionId(id: string, connectionId?: string): Promise<void> {
         const params: DocumentClient.UpdateItemInput = {
             TableName: ENV.MAIN_TABLE,
             Key: {
                 pk: `USER#${id}`,
                 sk: `META`,
             },
-            UpdateExpression: 'SET #connectionId = :connectionId',
+            UpdateExpression: 'SET #updatedAt = :updatedAt',
             ExpressionAttributeValues: {
-                ':connectionId': connectionId,
+                ':updatedAt': new Date().toISOString(),
             },
             ExpressionAttributeNames: {
+                '#gsi2pk': 'gsi2pk',
+                '#gsi2sk': 'gsi2sk',
                 '#connectionId': 'connectionId',
+                '#updatedAt': 'updatedAt',
             },
         };
+
+        if (!connectionId) {
+            params.UpdateExpression += ' REMOVE #gsi2pk, #gsi2sk, #connectionId';
+        } else {
+            params.UpdateExpression += ', #gsi2pk = :gsi2pk, #gsi2sk = :gsi2sk, #connectionId = :connectionId';
+            params.ExpressionAttributeValues = {
+                ...params.ExpressionAttributeValues,
+                ':gsi2pk': `CONNECTION#${connectionId}`,
+                ':gsi2sk': `USER#${id}`,
+                ':connectionId': connectionId,
+            };
+        }
+
+        console.log('params', params);
 
         try {
             await DBClient.update(params).promise();
@@ -120,7 +159,6 @@ export class UserServices implements IUserServices {
     }
 
     async findById(id: string): Promise<User> {
-        console.log('id: ', id);
         const params = {
             TableName: ENV.MAIN_TABLE,
             Key: {
@@ -128,9 +166,7 @@ export class UserServices implements IUserServices {
                 sk: `META`,
             },
         };
-
         const result = await DBClient.get(params).promise();
-        console.log(result);
         const user = plainToInstance(User, result?.Item, {
             excludeExtraneousValues: true,
         });
