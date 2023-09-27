@@ -1,9 +1,9 @@
 import { Expose } from 'class-transformer';
 
 export class Base {
-    @Expose()
-    createdAt: number;
+  @Expose()
+  createdAt: number;
 
-    @Expose()
-    updatedAt: number;
+  @Expose()
+  updatedAt: number;
 }

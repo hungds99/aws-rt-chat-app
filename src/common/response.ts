@@ -2,40 +2,40 @@ import { HTTPCode } from './constants';
 import { BaseError } from './exceptions';
 
 export interface BaseResponse {
-    code: number;
-    data?: any;
-    error?: any;
+  code: number;
+  data?: any;
+  error?: any;
 }
 
 export class BaseResponse implements BaseResponse {
-    toResponse = () => {
-        return {
-            statusCode: this.code,
-            body: JSON.stringify({
-                code: this.code,
-                data: this.data,
-                error: this.error,
-            }),
-        };
+  toResponse = () => {
+    return {
+      statusCode: this.code,
+      body: JSON.stringify({
+        code: this.code,
+        data: this.data,
+        error: this.error,
+      }),
     };
+  };
 
-    static toSuccessResponse = (data: any) => {
-        const response = new BaseResponse();
-        response.code = HTTPCode.OK;
-        response.data = data;
-        return response.toResponse();
-    };
+  static toSuccessResponse = (data: any) => {
+    const response = new BaseResponse();
+    response.code = HTTPCode.OK;
+    response.data = data;
+    return response.toResponse();
+  };
 
-    static toErrorResponse = (error: Error | BaseError) => {
-        const errorResponse = new BaseResponse();
-        errorResponse.code = error instanceof BaseError ? error.code : HTTPCode.INTERNAL_SERVER_ERROR;
-        errorResponse.error =
-            error instanceof BaseError
-                ? errorResponse.code === HTTPCode.INTERNAL_SERVER_ERROR
-                    ? 'Internal Server Error'
-                    : error.error
-                : 'Internal Server Error';
-        console.error('Internal error: ', error);
-        return errorResponse.toResponse();
-    };
+  static toErrorResponse = (error: Error | BaseError) => {
+    const errorResponse = new BaseResponse();
+    errorResponse.code = error instanceof BaseError ? error.code : HTTPCode.INTERNAL_SERVER_ERROR;
+    errorResponse.error =
+      error instanceof BaseError
+        ? errorResponse.code === HTTPCode.INTERNAL_SERVER_ERROR
+          ? 'Internal Server Error'
+          : error.error
+        : 'Internal Server Error';
+    console.error('Internal error: ', error);
+    return errorResponse.toResponse();
+  };
 }
