@@ -1,5 +1,5 @@
 org: hungdinh
-app: aws-rt-chat
+app: aws-rt-chat-app
 service: aws-rt-chat
 frameworkVersion: '3'
 
@@ -15,10 +15,8 @@ custom:
 provider:
     name: aws
     stage: dev
-    runtime: nodejs14.x
+    runtime: nodejs18.x
     region: ap-southeast-1
-    logs:
-        websocket: true
     iam:
         role:
             statements:
@@ -54,24 +52,26 @@ provider:
             customAuthorizer:
                 type: request
                 functionName: customAuthorizer
-                identitySource: $request.header.Authorization
+                identitySource: [$request.header.Authorization]
                 resultTtlInSeconds: 300
                 identityValidationExpression: 'Bearer .*'
     environment:
         MAIN_TABLE: ${self:custom.tableName}
 
 functions:
-    # Authorizer API
+    # Authorizer middleware
     customAuthorizer:
         handler: './src/handlers/auth/index.authorizer'
 
     # Auth API
+    ## Login route: Post /auth/login
     login:
         handler: './src/handlers/auth/index.login'
         events:
             - httpApi:
                   path: /auth/login
                   method: post
+    ## Register route: Post /auth/register
     register:
         handler: './src/handlers/auth/index.register'
         events:
@@ -80,6 +80,7 @@ functions:
                   method: post
 
     # USERS API
+    ## Get all users route: Get /users
     getUsers:
         handler: './src/handlers/users/index.getUsers'
         events:
@@ -88,6 +89,7 @@ functions:
                   method: get
                   authorizer:
                       name: customAuthorizer
+    ## Get user by id route: Get /users/{id}
     getUser:
         handler: './src/handlers/users/index.getUser'
         events:
@@ -96,7 +98,9 @@ functions:
                   method: get
                   authorizer:
                       name: customAuthorizer
+    
     # ROOMS API
+    ## Get all rooms route: Get /rooms
     getRooms:
         handler: './src/handlers/rooms/index.getRooms'
         events:
@@ -105,6 +109,7 @@ functions:
                   method: get
                   authorizer:
                       name: customAuthorizer
+    ## Get room by id route: Get /rooms/{id}
     getRoom:
         handler: './src/handlers/rooms/index.getRoom'
         events:
@@ -113,6 +118,7 @@ functions:
                   method: get
                   authorizer:
                       name: customAuthorizer
+    ## Get room messages route: Get /rooms/{id}/messages
     getMessages:
         handler: './src/handlers/rooms/index.getMessages'
         events:
