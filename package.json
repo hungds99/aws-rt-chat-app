@@ -1,7 +1,6 @@
 {
   "name": "aws-rt-chat-app",
   "version": "1.0.0",
-  "type": "module",
   "author": {
     "name": "Hung Dinh S.",
     "email": "dinhsyhung99@gmail.com"
@@ -16,6 +15,8 @@
     "serve:watch": "nodemon -e js,ts,jsx,tsx -x npm run serve"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.421.0",
+    "@aws-sdk/lib-dynamodb": "^3.421.0",
     "aws-sdk": "^2.1205.0",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",

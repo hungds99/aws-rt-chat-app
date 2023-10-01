@@ -1,4 +1,5 @@
 import { BaseResponse } from './response';
+import 'reflect-metadata';
 
 export const WrapperHandler = (handler: any) => {
   return async (event: any, context: any) => {

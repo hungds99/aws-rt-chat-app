@@ -10,12 +10,13 @@ plugins:
 custom:
     tableName: 'MAIN_TABLE'
     serverless-offline:
+        host: 127.0.0.1
         ignoreJWTSignature: true
 
 provider:
     name: aws
     stage: dev
-    runtime: nodejs18.x
+    runtime: nodejs16.x
     region: ap-southeast-1
     iam:
         role:

@@ -1,77 +1,85 @@
 {
-    "AttributeDefinitions": [
+  "TableName": "MAIN_TABLE",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "pk",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "sk",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "gsi1pk",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "gsi1sk",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "gsi2pk",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "gsi2sk",
+      "AttributeType": "S"
+    }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "gsi1",
+      "KeySchema": [
         {
-            "AttributeName": "pk",
-            "AttributeType": "S"
+          "AttributeName": "gsi1pk",
+          "KeyType": "HASH"
         },
         {
-            "AttributeName": "sk",
-            "AttributeType": "S"
-        },
-        {
-            "AttributeName": "gsi1pk",
-            "AttributeType": "S"
-        },
-        {
-            "AttributeName": "gsi1sk",
-            "AttributeType": "S"
+          "AttributeName": "gsi1sk",
+          "KeyType": "RANGE"
         }
-    ],
-    "TableName": "MAIN_TABLE",
-    "GlobalSecondaryIndexes": [
-        {
-            "IndexName": "gsi1",
-            "KeySchema": [
-                {
-                    "AttributeName": "gsi1pk",
-                    "KeyType": "HASH"
-                },
-                {
-                    "AttributeName": "gsi1sk",
-                    "KeyType": "RANGE"
-                }
-            ],
-            "Projection": {
-                "ProjectionType": "ALL"
-            },
-            "ProvisionedThroughput": {
-                "ReadCapacityUnits": 1,
-                "WriteCapacityUnits": 1
-            }
-        },
-        {
-            "IndexName": "gsi2",
-            "KeySchema": [
-                {
-                    "AttributeName": "gsi2pk",
-                    "KeyType": "HASH"
-                },
-                {
-                    "AttributeName": "gsi2sk",
-                    "KeyType": "RANGE"
-                }
-            ],
-            "Projection": {
-                "ProjectionType": "ALL"
-            },
-            "ProvisionedThroughput": {
-                "ReadCapacityUnits": 1,
-                "WriteCapacityUnits": 1
-            }
-        }
-    ],
-    "KeySchema": [
-        {
-            "AttributeName": "pk",
-            "KeyType": "HASH"
-        },
-        {
-            "AttributeName": "sk",
-            "KeyType": "RANGE"
-        }
-    ],
-    "ProvisionedThroughput": {
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
         "ReadCapacityUnits": 1,
         "WriteCapacityUnits": 1
+      }
+    },
+    {
+      "IndexName": "gsi2",
+      "KeySchema": [
+        {
+          "AttributeName": "gsi2pk",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "gsi2sk",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 1,
+        "WriteCapacityUnits": 1
+      }
     }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "pk",
+      "KeyType": "HASH"
+    },
+    {
+      "AttributeName": "sk",
+      "KeyType": "RANGE"
+    }
+  ],
+  "ProvisionedThroughput": {
+    "ReadCapacityUnits": 1,
+    "WriteCapacityUnits": 1
+  }
 }

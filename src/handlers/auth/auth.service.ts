@@ -32,7 +32,7 @@ export class AuthServices implements IAuthServices {
   async authorizer(token: string): Promise<User> {
     const tokenDecoded = await verifyJWT(token);
     if (!tokenDecoded) throw new UnauthorizedException('Invalid token');
-    const user = await this.userServices.findById(tokenDecoded?.user?.id);
+    const user = await this.userServices.findById(tokenDecoded?.id);
     return user;
   }
 

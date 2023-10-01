@@ -88,8 +88,6 @@ export class UserServices implements IUserServices {
       };
     }
 
-    console.log('params', params);
-
     try {
       await DBClient.update(params).promise();
     } catch (error) {
