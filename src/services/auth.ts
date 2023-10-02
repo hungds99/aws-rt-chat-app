@@ -92,8 +92,8 @@ export default class BaseAuthServices implements AuthServices {
               ConditionExpression: 'attribute_not_exists(pk)',
               Item: {
                 pk: `USER#${user.id}`,
-                sk: "META",
-                gsi1pk: "USERS",
+                sk: 'META',
+                gsi1pk: 'USERS',
                 gsi1sk: `CREATED_AT#${user.createdAt}`,
                 ...user,
               },
@@ -105,7 +105,7 @@ export default class BaseAuthServices implements AuthServices {
               ConditionExpression: 'attribute_not_exists(pk)',
               Item: {
                 pk: `EMAIL#${email}`,
-                sk: "EMAIL",
+                sk: 'EMAIL',
                 userId: user.id,
               },
             },
