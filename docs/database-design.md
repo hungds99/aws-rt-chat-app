@@ -1,4 +1,5 @@
 ### Access patterns
+
 - Single DynamoDB table design
   - PK: `PK`
   - SK: `SK`
@@ -7,7 +8,9 @@
   - Attributes: `attr1`, `attr2`, `attr3`
 
 #### User
+
 - Table Partition Info:
+
   - Entity: `user`
   - Attributes: `userId`, `email`, `username`, `password`, `createdAt`, `updatedAt`
 
@@ -26,11 +29,12 @@
     - Example: `GSI1PK = USERS and GSI1SK begins_with CREATED_AT#`
 
 ### Room
+
 - Table Partition Info:
   - Entity: `room`
   - Attributes: `roomId`, `title`, `ownerId`, `members`, `imageUrl`, `createdAt`, `updatedAt`
-  
 - Access Patterns
+
   - Get room info by roomId
     - Type: `Table`
     - Condition: `PK = ROOM#roomId and SK = INFO`
@@ -52,5 +56,6 @@
   - Attributes: `roomId`, `roomName`, `ownerId`, `members`, `createdAt`, `updatedAt`
 
 ### Message
+
 - Create new message
 - Get messages by roomId and sort by timestamp
