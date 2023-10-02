@@ -96,7 +96,7 @@ export default class BaseUserServices implements UserServices {
     }
   }
 
-  async findDetailByEmail(email: string, isAdmin: boolean = false): Promise<User> {
+  async findDetailByEmail(email: string, isAdmin = false): Promise<User> {
     const userId = await this.findByEmail(email);
     try {
       const params: DocumentClient.GetItemInput = {
