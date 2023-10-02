@@ -10,6 +10,7 @@
     "test": "jest --coverage",
     "deploy": "serverless deploy",
     "start": "export AWS_PROFILE=local && docker-compose up -d",
+    "build": "serverless package",
     "build:db": "aws dynamodb create-table --cli-input-json file://database/main-table.json --endpoint-url http://localhost:8000",
     "serve": "sls offline",
     "serve:watch": "nodemon -e js,ts,jsx,tsx -x npm run serve"

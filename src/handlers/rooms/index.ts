@@ -1,16 +1,16 @@
-import { NotFoundException } from '../../common/exceptions';
-import { WrapperHandler } from '../../common/wrapper-handler';
-import { apiGWsendMessageToClients } from '../../helpers/utils';
-import { User } from '../users/user.model';
-import { UserServices } from '../users/user.service';
-import { MessageServices } from './messages/message.service';
-import { RoomServices } from './room.service';
+import { NotFoundException } from '@common/exceptions';
+import { User } from '@models/user';
+import BaseMessageServices from '@services/message';
+import BaseRoomServices from '@services/room';
+import BaseUserServices from '@services/user';
+import { apiGWsendMessageToClients } from '@utils/apigateway';
+import { wrapperHandler } from '@utils/lambda';
 
-const roomServices = new RoomServices();
-const messageServices = new MessageServices();
-const userServices = new UserServices();
+const roomServices = new BaseRoomServices();
+const messageServices = new BaseMessageServices();
+const userServices = new BaseUserServices();
 
-export const getRooms = WrapperHandler(async (event: any) => {
+export const getRooms = wrapperHandler(async (event: any) => {
   const {
     authorizer: { userId },
   } = event.requestContext;
@@ -18,25 +18,26 @@ export const getRooms = WrapperHandler(async (event: any) => {
   return rooms;
 });
 
-export const getRoom = WrapperHandler(async (event: any) => {
+export const getRoom = wrapperHandler(async (event: any) => {
   const {
     authorizer: { userId },
   } = event.requestContext;
   const { id } = event.pathParameters;
   const room = await roomServices.findById(id);
+  // Check if user is a member of the room
   if (room.members.indexOf(userId) === -1) {
     throw new NotFoundException('Room not found');
   }
   return room;
 });
 
-export const getMessages = WrapperHandler(async (event: any) => {
+export const getMessages = wrapperHandler(async (event: any) => {
   const { id } = event.pathParameters;
   const messages = await messageServices.findByRoomId(id);
   return messages;
 });
 
-export const wsOnCreateRoom = WrapperHandler(async (event: any, context: any) => {
+export const wsOnCreateRoom = wrapperHandler(async (event: any, context: any) => {
   // const {
   //     authorizer: { userId },
   // } = event.requestContext;
@@ -49,32 +50,53 @@ export const wsOnCreateRoom = WrapperHandler(async (event: any, context: any) =>
     [...new Set<string>([...members, userId])],
     'PRIVATE',
   );
-  if (isExisted) return room;
+  if (isExisted) {
+    return room;
+  }
 
   const users = await userServices.findByIds(room.members);
-
   // Send message to all members
-  const connectionIds = users
-    .map((user: User) => (user.id !== userId ? user.connectionId : null))
-    .filter((connectionId: string) => connectionId);
-  await apiGWsendMessageToClients(connectionIds, { room: room });
+  const clients = [];
+  users.forEach((user: User) => {
+    if (user.connectionId !== userId && user.connectionId) {
+      clients.push({
+        connectionId: user.connectionId,
+        payload: {
+          action: 'joinedRoom',
+          data: room,
+        },
+      });
+    }
+  });
+
+  await apiGWsendMessageToClients(clients);
   return room;
 });
 
-export const wsOnCreateMessage = WrapperHandler(async (event: any, context: any) => {
+export const wsOnCreateMessage = wrapperHandler(async (event: any, context: any) => {
   // const {
   //     authorizer: { userId },
   // } = event.requestContext;
   const { roomId, content, userId } = JSON.parse(event.body);
 
   const room = await roomServices.findById(roomId);
-  if (!room) throw new NotFoundException(`Room #${roomId} not found`);
-
   const message = await messageServices.create(roomId, userId, content);
 
   // Send message to all members
   const users = await userServices.findByIds(room.members);
-  const connectionIds = users.map((user: User) => user.connectionId);
-  await apiGWsendMessageToClients(connectionIds, { roomId, message });
+  const clients = [];
+  users.forEach((user: User) => {
+    if (user.connectionId) {
+      clients.push({
+        connectionId: user.connectionId,
+        payload: {
+          action: user.connectionId === userId ? 'createdMessage' : 'receivedMessage',
+          data: message,
+        },
+      });
+    }
+  });
+  await apiGWsendMessageToClients(clients);
+
   return { roomId, message };
 });
