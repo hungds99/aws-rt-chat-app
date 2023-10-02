@@ -120,8 +120,8 @@ export default class BaseRoomServices implements RoomServices {
             PutRequest: {
               Item: {
                 pk: `ROOM#${room.id}`,
-                sk: `META`,
-                gsi1pk: `ROOMS`,
+                sk: "META",
+                gsi1pk: "ROOMS",
                 gsi1sk: `UPDATED_AT#${room.updatedAt}`,
                 ...room,
               },
@@ -165,8 +165,8 @@ export default class BaseRoomServices implements RoomServices {
             PutRequest: {
               Item: {
                 pk: `ROOM#${room.id}`,
-                sk: `META`,
-                gsi1pk: `ROOMS`,
+                sk: "META",
+                gsi1pk: "ROOMS",
                 gsi1sk: `UPDATED_AT#${room.updatedAt}`,
                 ...room,
               },
@@ -249,7 +249,7 @@ export default class BaseRoomServices implements RoomServices {
       TableName: 'MAIN_TABLE',
       Key: {
         pk: `ROOM#${roomId}`,
-        sk: `META`,
+        sk: "META",
       },
     };
     const result = await DBClient.get(params).promise();

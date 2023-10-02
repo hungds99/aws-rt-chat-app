@@ -50,7 +50,7 @@ export default class BaseMessageServices implements MessageServices {
             TableName: getEnv().MAIN_TABLE,
             Key: {
               pk: `ROOM#${roomId}`,
-              sk: `META`,
+              sk: "META",
             },
             UpdateExpression: 'SET #updatedAt = :updatedAt, #lastMessage = :lastMessage',
             ExpressionAttributeNames: {
@@ -81,7 +81,7 @@ export default class BaseMessageServices implements MessageServices {
       KeyConditionExpression: 'pk = :pk and begins_with(sk, :sk)',
       ExpressionAttributeValues: {
         ':pk': `ROOM#${roomId}`,
-        ':sk': `MESSAGE#`,
+        ':sk': "MESSAGE#",
       },
     };
     const { Items } = await DBClient.query(params).promise();

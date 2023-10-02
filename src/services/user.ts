@@ -24,7 +24,7 @@ export default class BaseUserServices implements UserServices {
       KeyConditionExpression: '#gsi2pk = :gsi2pk AND begins_with(#gsi2sk,:gsi2sk)',
       ExpressionAttributeValues: {
         ':gsi2pk': `CONNECTION#${connectionId}`,
-        ':gsi2sk': `USER#`,
+        ':gsi2sk': "USER#",
       },
       ExpressionAttributeNames: {
         '#gsi2pk': 'gsi2pk',
@@ -44,7 +44,7 @@ export default class BaseUserServices implements UserServices {
         [getEnv().MAIN_TABLE]: {
           Keys: ids.map((id) => ({
             pk: `USER#${id}`,
-            sk: `META`,
+            sk: "META",
           })),
         },
       },
@@ -62,7 +62,7 @@ export default class BaseUserServices implements UserServices {
       TableName: getEnv().MAIN_TABLE,
       Key: {
         pk: `USER#${id}`,
-        sk: `META`,
+        sk: "META",
       },
       UpdateExpression: 'SET #updatedAt = :updatedAt',
       ExpressionAttributeValues: {
@@ -103,7 +103,7 @@ export default class BaseUserServices implements UserServices {
         TableName: getEnv().MAIN_TABLE,
         Key: {
           pk: `USER#${userId}`,
-          sk: `META`,
+          sk: "META",
         },
       };
       const result = await DBClient.get(params).promise();
@@ -123,7 +123,7 @@ export default class BaseUserServices implements UserServices {
         TableName: getEnv().MAIN_TABLE,
         Key: {
           pk: `EMAIL#${email}`,
-          sk: `EMAIL`,
+          sk: "EMAIL",
         },
       };
       const result = await DBClient.get(params).promise();
@@ -163,7 +163,7 @@ export default class BaseUserServices implements UserServices {
       TableName: getEnv().MAIN_TABLE,
       Key: {
         pk: `USER#${id}`,
-        sk: `META`,
+        sk: "META",
       },
     };
     const result = await DBClient.get(params).promise();
