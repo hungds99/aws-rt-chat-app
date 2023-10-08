@@ -11,16 +11,11 @@
       "@services/*": ["services/*"],
       "@repositories/*": ["repositories/*"]
     },
-    "module": "Node16",
-    "moduleResolution": "Node16",
-    "target": "es5",
-    "lib": ["dom", "es2015", "es2016"],
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "target": "ES6",
     "sourceMap": false,
-    "declaration": true,
-    "experimentalDecorators": true,
-    "outDir": "lib",
-    "noUnusedLocals": false,
-    "downlevelIteration": true
+    "outDir": "lib"
   },
   "exclude": ["node_modules", "static", "lib"],
   "include": ["src", "src/**/*.ts"]

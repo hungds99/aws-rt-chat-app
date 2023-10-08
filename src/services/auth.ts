@@ -1,31 +1,34 @@
-import { DBClient, getEnv } from '@common/configs';
-import {
-  BadRequestException,
-  InternalServerException,
-  UnauthorizedException,
-} from '@common/exceptions';
+import { BadRequestException, UnauthorizedException } from '@common/exceptions';
 import getAvatar from '@libs/getAvatar';
-import { AuthUser, CreateUserInput, User } from '@models/user';
+import { CreateUserInput, User } from '@models/user';
+import { BaseUserRepository } from '@repositories/user';
 import { generateJWT, verifyJWT } from '@utils/auth';
 import { validateSchema } from '@utils/validation';
 import { LoginUserSchema, RegisterUserSchema } from '@validations/auth';
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import * as bcrypt from 'bcryptjs';
-import { plainToInstance } from 'class-transformer';
+import { plainToClass } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
-import BaseUserServices from './user';
+import BaseUserService from './user';
 
-interface AuthServices {
+interface AuthService {
   authorizer(token: string): Promise<User>;
-  login(email: string, password: string): Promise<AuthUser>;
+  login(
+    email: string,
+    password: string,
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }>;
   register(user: CreateUserInput): Promise<User>;
 }
 
-export default class BaseAuthServices implements AuthServices {
-  userServices: BaseUserServices;
+export default class BaseAuthService implements AuthService {
+  private readonly userService: BaseUserService;
+  private readonly userRepository: BaseUserRepository;
 
-  constructor(userServices: BaseUserServices = new BaseUserServices()) {
-    this.userServices = userServices;
+  constructor() {
+    this.userService = new BaseUserService();
+    this.userRepository = new BaseUserRepository();
   }
 
   async authorizer(token: string): Promise<User> {
@@ -33,89 +36,51 @@ export default class BaseAuthServices implements AuthServices {
     if (!tokenDecoded) {
       throw new UnauthorizedException('Invalid token');
     }
-    const user = await this.userServices.findById(tokenDecoded?.id);
+    const user = await this.userRepository.getById(tokenDecoded?.id);
     return user;
   }
 
-  async login(email: string, password: string): Promise<AuthUser> {
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
     await validateSchema(LoginUserSchema, { email, password });
-    const user = await this.userServices.findDetailByEmail(email, true);
-    if (!user || !bcrypt.compareSync(password, user.password))
+
+    const user = await this.userService.findByEmail(email, true);
+    if (!user || !bcrypt.compareSync(password, user.password)) {
       throw new UnauthorizedException('Wrong credentials');
-    try {
-      const accessToken = generateJWT({ ...user, password: undefined }, { expiresIn: '1d' });
-      const refreshToken = generateJWT({ ...user, password: undefined }, { expiresIn: '30d' });
-      const authUser = plainToInstance(
-        AuthUser,
-        {
-          ...user,
-          accessToken,
-          refreshToken,
-        },
-        {
-          excludeExtraneousValues: true,
-        },
-      );
-      return authUser;
-    } catch (error) {
-      throw new InternalServerException(error);
     }
+    return {
+      accessToken: generateJWT({ ...user, password: undefined }, { expiresIn: '1d' }),
+      refreshToken: generateJWT({ ...user, password: undefined }, { expiresIn: '30d' }),
+    };
   }
 
   async register(newUser: CreateUserInput): Promise<User> {
     const { email, password, firstName, lastName } = newUser;
     await validateSchema(RegisterUserSchema, { ...newUser });
-    const userIdExisted = await this.userServices.findByEmail(email);
-    if (userIdExisted) {
+
+    const existedUser = await this.userService.findByEmail(email);
+    if (existedUser) {
       throw new BadRequestException('User already exists');
     }
 
-    try {
-      const now = new Date().getTime();
-      const passwordHashed = bcrypt.hashSync(password, 6);
-      const user: User = {
-        id: uuidv4(),
-        firstName,
-        lastName,
-        email,
-        password: passwordHashed,
-        avatar: getAvatar(new Date().getTime().toString()),
-        createdAt: now,
-        updatedAt: now,
-        type: 'USER',
-      };
-      const params: DocumentClient.TransactWriteItemsInput = {
-        TransactItems: [
-          {
-            Put: {
-              TableName: getEnv().MAIN_TABLE,
-              ConditionExpression: 'attribute_not_exists(pk)',
-              Item: {
-                pk: `USER#${user.id}`,
-                sk: 'META',
-                gsi1pk: 'USERS',
-                gsi1sk: `CREATED_AT#${user.createdAt}`,
-                ...user,
-              },
-            },
-          },
-          {
-            Put: {
-              TableName: getEnv().MAIN_TABLE,
-              ConditionExpression: 'attribute_not_exists(pk)',
-              Item: {
-                pk: `EMAIL#${email}`,
-                sk: 'EMAIL',
-                userId: user.id,
-              },
-            },
-          },
-        ],
-      };
-      await DBClient.transactWrite(params).promise();
-      return plainToInstance(User, user, { excludeExtraneousValues: true });
-    } catch (error) {
-      throw new InternalServerException(error);
-    }
+    const now = new Date().getTime();
+    const user = plainToClass(User, {
+      id: uuidv4(),
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      password: bcrypt.hashSync(password, 6),
+      avatar: getAvatar(new Date().getTime().toString()),
+      createdAt: now,
+      updatedAt: now,
+      type: 'USER',
+    });
+    const createdUser = await this.userRepository.create(user);
+    return createdUser;
   }
 }

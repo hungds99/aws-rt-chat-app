@@ -7,7 +7,7 @@ interface DynamoDBRepository<T> {
 }
 
 export default class BaseDynamoDBRepository<T> implements DynamoDBRepository<T> {
-  ddbDocClient: DynamoDBDocumentClient;
+  private readonly ddbDocClient: DynamoDBDocumentClient;
 
   constructor() {
     const marshallOptions = {

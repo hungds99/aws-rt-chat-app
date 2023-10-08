@@ -10,4 +10,6 @@ export const RegisterUserSchema: Joi.ObjectSchema<any> = Joi.object({
 export const LoginUserSchema: Joi.ObjectSchema<any> = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
+}).options({
+  allowUnknown: false,
 });

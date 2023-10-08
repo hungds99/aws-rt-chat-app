@@ -27,12 +27,4 @@ export class User extends Model {
   type: 'USER';
 }
 
-export class AuthUser extends User {
-  @Expose()
-  accessToken: string;
-
-  @Expose()
-  refreshToken: string;
-}
-
 export type CreateUserInput = Pick<User, 'email' | 'password' | 'firstName' | 'lastName'>;

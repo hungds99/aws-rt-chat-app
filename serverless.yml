@@ -1,5 +1,5 @@
 org: hungdinh
-app: aws-rt-chat-app
+app: aws-rt-chat
 service: aws-rt-chat
 frameworkVersion: '3'
 
@@ -39,7 +39,6 @@ provider:
     httpApi:
         payload: '2.0'
         cors:
-            origin: '*'
             allowedHeaders:
                 - Content-Type
                 - Authorization
@@ -131,21 +130,21 @@ functions:
 
     # WEBSOCKET API
     wsOnConnect:
-        handler: './src/handlers/ws/index.wsOnConnect'
+        handler: './src/handlers/websocket/index.wsOnConnect'
         events:
             - websocket:
                   route: $connect
                   #   authorizer: customAuthorizer
                   routeResponseSelectionExpression: $default
     wsOnDisconnect:
-        handler: './src/handlers/ws/index.wsOnDisconnect'
+        handler: './src/handlers/websocket/index.wsOnDisconnect'
         events:
             - websocket:
                   route: $disconnect
                   #   authorizer: customAuthorizer
                   routeResponseSelectionExpression: $default
     wsDefault:
-        handler: './src/handlers/ws/index.wsDefault'
+        handler: './src/handlers/websocket/index.wsDefault'
         events:
             - websocket:
                   route: $default
@@ -153,7 +152,7 @@ functions:
 
     # Auth Websocket API
     wsAuth:
-        handler: './src/handlers/ws/index.wsAuth'
+        handler: './src/handlers/websocket/index.wsAuth'
         events:
             - websocket:
                   route: auth

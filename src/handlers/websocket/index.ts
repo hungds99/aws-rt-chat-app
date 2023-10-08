@@ -1,8 +1,7 @@
-import { BadRequestException } from '@common/exceptions';
-import BaseUserServices from '@services/user';
+import BaseWsService from '@services/ws';
 import { wrapperHandler } from '@utils/lambda';
 
-const userServices = new BaseUserServices();
+const wsService = new BaseWsService();
 
 export const wsOnConnect = wrapperHandler(async (event: any) => {
   const { connectionId } = event.requestContext;
@@ -12,18 +11,13 @@ export const wsOnConnect = wrapperHandler(async (event: any) => {
 export const wsAuth = wrapperHandler(async (event: any) => {
   const { connectionId } = event.requestContext;
   const { data } = JSON.parse(event.body);
-  if (!data) {
-    throw new BadRequestException('No data provided');
-  }
-  const user = await userServices.findById(data.id);
-  await userServices.updateConnectionId(user.id, connectionId);
-  return { ...user, connectionId };
+  const user = await wsService.createUserConnection(data.userId, connectionId);
+  return { status: 'AUTHENTICATED', user };
 });
 
 export const wsOnDisconnect = wrapperHandler(async (event: any) => {
   const { connectionId } = event.requestContext;
-  const user = await userServices.findByConnectionId(connectionId);
-  await userServices.updateConnectionId(user.id);
+  const user = await wsService.removeUserConnection(connectionId);
   console.log(`Connection ${connectionId} of ${user.id} has been closed...`);
 });
 

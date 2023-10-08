@@ -10,10 +10,10 @@ export class Room extends Model {
   roomName: string;
 
   @Expose()
-  owner: string;
+  ownerId: string;
 
   @Expose()
-  members: string[];
+  memberIds: string[];
 
   @Type(() => Message)
   lastMessage: Message;
