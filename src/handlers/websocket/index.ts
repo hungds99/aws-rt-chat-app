@@ -12,6 +12,7 @@ export const wsAuth = wrapperHandler(async (event: any) => {
   const { connectionId } = event.requestContext;
   const { data } = JSON.parse(event.body);
   const user = await wsService.createUserConnection(data.userId, connectionId);
+  console.log(`Connection ${connectionId} of ${user.id} has been authenticated...`);
   return { status: 'AUTHENTICATED', user };
 });
 

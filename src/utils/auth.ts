@@ -3,11 +3,11 @@ import { User } from '@models/user';
 import * as jwt from 'jsonwebtoken';
 
 export const getBearerToken = (event: any): string => {
-  const { authorizationToken, headers } = event;
+  const { headers } = event;
 
-  const tokenString = authorizationToken
-    ? authorizationToken.split(' ')[1]
-    : headers?.authorizationToken;
+  const tokenString = headers.Authorization.split(' ')[1];
+
+  console.log('tokenString', tokenString);
 
   return tokenString;
 };
@@ -37,7 +37,7 @@ export const verifyJWT = (token: string): Promise<any> => {
 
 export const generateJWTIAMPolicy = (
   principalId: string,
-  effect: 'Allow' | 'Block',
+  effect: 'Allow' | 'Deny',
   resource: string,
   user?: User,
 ) => {

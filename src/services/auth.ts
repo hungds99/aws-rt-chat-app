@@ -49,7 +49,8 @@ export default class BaseAuthService implements AuthService {
   }> {
     await validateSchema(LoginUserSchema, { email, password });
 
-    const user = await this.userService.findByEmail(email, true);
+    const user = await this.userService.findByEmail(email);
+    console.log('user', user);
     if (!user || !bcrypt.compareSync(password, user.password)) {
       throw new UnauthorizedException('Wrong credentials');
     }

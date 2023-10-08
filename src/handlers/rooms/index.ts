@@ -10,18 +10,18 @@ const messageService = new BaseMessageService();
 
 export const getRooms = wrapperHandler(async (event: any) => {
   const {
-    authorizer: { userId },
+    authorizer: { lambda, jwt },
   } = event.requestContext;
-  const rooms = await roomService.findAllByUserId(userId);
+  const rooms = await roomService.findAllByUserId(lambda?.userId);
   return rooms;
 });
 
 export const getRoom = wrapperHandler(async (event: any) => {
   const {
-    authorizer: { userId },
+    authorizer: { lambda, jwt },
   } = event.requestContext;
   const { id } = event.pathParameters;
-  const room = await roomService.getByIdWithUserId(id, userId);
+  const room = await roomService.getByIdWithUserId(id, lambda?.userId);
   return room;
 });
 
@@ -38,6 +38,11 @@ export const wsOnCreateRoom = wrapperHandler(async (event: any, context: any) =>
   const {
     data: { userId, memberIds },
   } = JSON.parse(event.body);
+
+  console.log(event.body);
+
+  console.log('userId: ', userId);
+  console.log('memberIds: ', memberIds);
 
   const room = await wsService.createRoom(userId, memberIds);
 

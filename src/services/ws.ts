@@ -105,6 +105,7 @@ export default class BaseWsService implements WsService {
         });
       }
     });
+    console.log('clients: ', clients);
     await apiGWsendMessageToClients(clients);
     return message;
   }

@@ -16,13 +16,16 @@ export const register = wrapperHandler(async (event: any) => {
   return user;
 });
 
-export const authorizer = async (event: any) => {
+export const authorizer = async (event, context, callback) => {
   try {
     const bearerToken = getBearerToken(event);
     const user = await authService.authorizer(bearerToken);
-    return generateJWTIAMPolicy(user.id, 'Allow', event.methodArn, { ...user });
+    const allowPolicy = generateJWTIAMPolicy(user.id, 'Allow', event.routeArn, { ...user });
+    console.log('allowPolicy', { ...allowPolicy }, allowPolicy.policyDocument);
+    return callback(null, allowPolicy);
   } catch (error) {
     console.warn('Error authorizing user : ', error);
-    return generateJWTIAMPolicy('ERROR', 'Block', event.methodArn);
+    const denyPolicy = generateJWTIAMPolicy('ERROR', 'Deny', event.routeArn);
+    return callback(null, denyPolicy);
   }
 };

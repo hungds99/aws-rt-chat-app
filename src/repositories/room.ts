@@ -123,7 +123,10 @@ export default class BaseRoomRepository implements RoomRepository {
       },
     };
     const result = await DBClient.query(params).promise();
-    const rooms = await this.findByIds(result.Items.map((item) => item.gsi1sk.split('#')[1]));
+    if (!result.Items?.length) {
+      return [];
+    }
+    const rooms = await this.findByIds(result.Items?.map((item) => item.gsi1sk.split('#')[1]));
     return rooms;
   }
 

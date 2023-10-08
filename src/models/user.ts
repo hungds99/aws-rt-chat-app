@@ -11,7 +11,7 @@ export class User extends Model {
   @Expose()
   email: string;
 
-  @Expose({ groups: ['admin'] })
+  @Expose()
   password: string;
 
   @Expose()

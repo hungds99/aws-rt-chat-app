@@ -14,7 +14,7 @@ export const apiGWsendMessageToClients = async (
   }[],
 ) => {
   try {
-    await Promise.all(
+    const result = await Promise.allSettled(
       clients.map((client: { connectionId: string; payload: Record<string, any> }) => {
         const params: ApiGatewayManagementApi.PostToConnectionRequest = {
           ConnectionId: client.connectionId,
@@ -23,7 +23,9 @@ export const apiGWsendMessageToClients = async (
         return apigatewaymanagementapi.postToConnection(params).promise();
       }),
     );
+    console.log('result: ', result);
   } catch (error) {
+    console.log('error: ', error);
     throw new InternalServerException(error);
   }
 };

@@ -52,9 +52,6 @@ provider:
             customAuthorizer:
                 type: request
                 functionName: customAuthorizer
-                identitySource: [$request.header.Authorization]
-                resultTtlInSeconds: 300
-                identityValidationExpression: 'Bearer .*'
     environment:
         MAIN_TABLE: ${self:custom.tableName}
 

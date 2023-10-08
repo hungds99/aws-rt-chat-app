@@ -4,7 +4,7 @@ import { plainToClass } from 'class-transformer';
 
 interface UserService {
   updateConnection(userId: string, connectionId: string): Promise<User>;
-  findByEmail(email: string, isAdmin?: boolean): Promise<User>;
+  findByEmail(email: string): Promise<User>;
   findAll(): Promise<User[] | []>;
   findById(id: string): Promise<User | null>;
 }
@@ -25,14 +25,11 @@ export default class BaseUserService implements UserService {
     return updatedUser;
   }
 
-  async findByEmail(email: string, isAdmin?: boolean): Promise<User> {
+  async findByEmail(email: string): Promise<User> {
     const userId = await this.userRepository.findUserIdByEmail(email);
     const user = await this.userRepository.findById(userId);
-    const detailUser = plainToClass(User, user, {
-      groups: isAdmin ? ['admin'] : [],
-      excludeExtraneousValues: true,
-    });
-    return detailUser;
+    console.log('findByEmail user', user);
+    return user;
   }
 
   async findAll(): Promise<User[] | []> {

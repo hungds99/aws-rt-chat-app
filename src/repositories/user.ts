@@ -114,6 +114,7 @@ export class BaseUserRepository implements UserRepository {
       },
     };
     const result = await DBClient.get(params).promise();
+    console.log('result: ', result);
     const user = plainToClass(User, result?.Item, {
       excludeExtraneousValues: true,
       groups: ['admin'],
