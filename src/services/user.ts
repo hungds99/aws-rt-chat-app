@@ -1,6 +1,6 @@
 import { User } from '@models/user';
 import { BaseUserRepository } from '@repositories/user';
-import { plainToInstance } from 'class-transformer';
+import { plainToClass } from 'class-transformer';
 
 interface UserService {
   updateConnection(userId: string, connectionId: string): Promise<User>;
@@ -17,7 +17,7 @@ export default class BaseUserService implements UserService {
   }
 
   async updateConnection(userId: string, connectionId?: string): Promise<User> {
-    const user = plainToInstance(User, {
+    const user = plainToClass(User, {
       id: userId,
       connectionId: connectionId,
     });
@@ -28,7 +28,7 @@ export default class BaseUserService implements UserService {
   async findByEmail(email: string, isAdmin?: boolean): Promise<User> {
     const userId = await this.userRepository.findUserIdByEmail(email);
     const user = await this.userRepository.findById(userId);
-    const detailUser = plainToInstance(User, user, {
+    const detailUser = plainToClass(User, user, {
       groups: isAdmin ? ['admin'] : [],
       excludeExtraneousValues: true,
     });

@@ -1,4 +1,4 @@
-import { Expose, Type } from 'class-transformer';
+import { Expose } from 'class-transformer';
 import { Message } from './message';
 import { Model } from './model';
 
@@ -10,12 +10,12 @@ export class Room extends Model {
   roomName: string;
 
   @Expose()
-  ownerId: string;
+  userId: string;
 
   @Expose()
   memberIds: string[];
 
-  @Type(() => Message)
+  // @Type(() => Message)
   lastMessage: Message;
 
   @Expose()

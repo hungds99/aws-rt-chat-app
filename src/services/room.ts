@@ -4,12 +4,13 @@ import BaseRoomRepository from '@repositories/room';
 import { BaseUserRepository } from '@repositories/user';
 import { validateSchema } from '@utils/validation';
 import { NewRoomSchema } from '@validations/room';
-import { plainToInstance } from 'class-transformer';
+import { plainToClass } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
 
 interface RoomService {
-  create(ownerId: string, memberIds: string[]): Promise<{ room: Room; isExisted: boolean }>;
+  create(userId: string, memberIds: string[]): Promise<{ room: Room; isExisted: boolean }>;
   findAllByUserId(userId: string): Promise<Room[] | []>;
+  getByIdWithUserId(id: string, userId: string): Promise<Room>;
 }
 
 export default class BaseRoomService implements RoomService {
@@ -21,8 +22,8 @@ export default class BaseRoomService implements RoomService {
     this.userRepository = new BaseUserRepository();
   }
 
-  async create(ownerId: string, memberIds: string[]): Promise<{ room: Room; isExisted: boolean }> {
-    await validateSchema(NewRoomSchema, { ownerId, memberIds });
+  async create(userId: string, memberIds: string[]): Promise<{ room: Room; isExisted: boolean }> {
+    await validateSchema(NewRoomSchema, { userId, memberIds });
 
     const users = await this.userRepository.findByIds(memberIds);
     if (users.length !== memberIds.length) {
@@ -32,9 +33,9 @@ export default class BaseRoomService implements RoomService {
     const isGroupRoom = memberIds.length > 2;
 
     const now = new Date().getTime();
-    const room = plainToInstance(Room, {
+    const room = plainToClass(Room, {
       id: uuidv4(),
-      ownerId: ownerId,
+      userId: userId,
       memberIds: memberIds,
       type: isGroupRoom ? 'GROUP_ROOM' : 'PRIVATE_ROOM',
       createdAt: now,
@@ -58,5 +59,17 @@ export default class BaseRoomService implements RoomService {
   async findAllByUserId(userId: string): Promise<Room[] | []> {
     const rooms = await this.roomRepository.findAllByUserId(userId);
     return rooms;
+  }
+
+  async getByIdWithUserId(id: string, userId: string): Promise<Room> {
+    const room = await this.roomRepository.getById(id);
+    console.log('room', room);
+
+    // Check if user is a member of the room
+    if (room.memberIds.indexOf(userId) === -1) {
+      throw new BadRequestException('Room not found');
+    }
+
+    return room;
   }
 }

@@ -21,7 +21,6 @@
     "aws-sdk": "^2.1205.0",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
-    "es6-shim": "^0.35.8",
     "esbuild": "^0.15.5",
     "express": "^4.17.1",
     "joi": "^17.11.0",

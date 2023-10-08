@@ -1,17 +1,17 @@
 import { DBClient, getEnv } from '@common/configs';
 import { Message } from '@models/message';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-import { plainToInstance } from 'class-transformer';
+import { plainToClass } from 'class-transformer';
 
 interface MessageRepository {
-  create(message: Message): Promise<void>;
+  create(message: Message): Promise<Message>;
   findAllByRoomId(roomId: string): Promise<Message[] | []>;
 }
 
 export class BaseMessageRepository implements MessageRepository {
   constructor() {}
 
-  async create(message: Message): Promise<void> {
+  async create(message: Message): Promise<Message> {
     const params: DocumentClient.TransactWriteItemsInput = {
       TransactItems: [
         {
@@ -47,6 +47,7 @@ export class BaseMessageRepository implements MessageRepository {
       ],
     };
     await DBClient.transactWrite(params).promise();
+    return message;
   }
 
   async findAllByRoomId(roomId: string): Promise<Message[] | []> {
@@ -59,7 +60,7 @@ export class BaseMessageRepository implements MessageRepository {
       },
     };
     const { Items } = await DBClient.query(params).promise();
-    const messages = plainToInstance(Message, Items);
+    const messages = plainToClass(Message, Items);
     return messages || [];
   }
 }

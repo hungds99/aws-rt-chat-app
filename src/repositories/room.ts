@@ -3,7 +3,7 @@ import { NotFoundException } from '@common/exceptions';
 import { Room } from '@models/room';
 import { chunkDBQueryIDsInOperator } from '@utils/dynamodb';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-import { plainToInstance } from 'class-transformer';
+import { plainToClass } from 'class-transformer';
 
 interface RoomRepository {
   findByIds(ids: string[]): Promise<Room[] | []>;
@@ -39,7 +39,7 @@ export default class BaseRoomRepository implements RoomRepository {
       FilterExpression: chunkedFilterExpression,
     };
     const result = await DBClient.query(params).promise();
-    const rooms = plainToInstance(Room, result.Items, {
+    const rooms = plainToClass(Room, result.Items, {
       excludeExtraneousValues: true,
     });
     return rooms || [];
@@ -54,7 +54,7 @@ export default class BaseRoomRepository implements RoomRepository {
       },
     };
     const result = await DBClient.get(params).promise();
-    const room = plainToInstance(Room, result.Item);
+    const room = plainToClass(Room, result.Item);
     return room || null;
   }
 
@@ -80,7 +80,7 @@ export default class BaseRoomRepository implements RoomRepository {
       },
     };
     const result = await DBClient.scan(params).promise();
-    const rooms = plainToInstance(Room, result.Items, {
+    const rooms = plainToClass(Room, result.Items, {
       excludeExtraneousValues: true,
     });
     return rooms || [];
@@ -105,7 +105,10 @@ export default class BaseRoomRepository implements RoomRepository {
     };
 
     const result = await DBClient.batchGet(params).promise();
-    const room = await this.findById(result.Responses.MAIN_TABLE[0].roomId);
+    if (!result?.Responses?.MAIN_TABLE?.length) {
+      return null;
+    }
+    const room = await this.findById(result?.Responses?.MAIN_TABLE[0]?.roomId);
     return room;
   }
 

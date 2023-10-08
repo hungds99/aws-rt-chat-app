@@ -2,7 +2,7 @@ import { DBClient, getEnv } from '@common/configs';
 import { NotFoundException } from '@common/exceptions';
 import { User } from '@models/user';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-import { plainToClass, plainToInstance } from 'class-transformer';
+import { plainToClass } from 'class-transformer';
 
 interface UserRepository {
   create(user: User): Promise<User>;
@@ -48,7 +48,7 @@ export class BaseUserRepository implements UserRepository {
       ],
     };
     await DBClient.transactWrite(params).promise();
-    const createdUser = plainToInstance(User, user, { excludeExtraneousValues: true });
+    const createdUser = plainToClass(User, user, { excludeExtraneousValues: true });
 
     return createdUser;
   }
@@ -68,7 +68,7 @@ export class BaseUserRepository implements UserRepository {
       },
     };
     const result = await DBClient.query(params).promise();
-    const user = plainToInstance(User, result?.Items?.[0], {
+    const user = plainToClass(User, result?.Items?.[0], {
       excludeExtraneousValues: true,
     });
     return user || null;
@@ -87,7 +87,7 @@ export class BaseUserRepository implements UserRepository {
     };
 
     const result = await DBClient.batchGet(params).promise();
-    const users: User[] = plainToInstance(User, result?.Responses?.[getEnv().MAIN_TABLE], {
+    const users: User[] = plainToClass(User, result?.Responses?.[getEnv().MAIN_TABLE], {
       excludeExtraneousValues: true,
     });
     return users;
@@ -145,7 +145,7 @@ export class BaseUserRepository implements UserRepository {
     const result = await DBClient.query({
       ...params,
     }).promise();
-    const users: User[] = plainToInstance(User, result?.Items, {
+    const users: User[] = plainToClass(User, result?.Items, {
       excludeExtraneousValues: true,
     });
 
