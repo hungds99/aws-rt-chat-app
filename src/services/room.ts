@@ -42,18 +42,24 @@ export default class BaseRoomService implements RoomService {
       updatedAt: now,
     });
 
+    const result = {
+      room: null,
+      isExisted: false,
+    };
+
     if (isGroupRoom) {
-      const createdRoom = await this.roomRepository.createGroup(room);
-      return { room: createdRoom, isExisted: false };
+      result.room = await this.roomRepository.createGroup(room);
     } else {
       const existedRoom = await this.roomRepository.findPrivate(room.memberIds);
       if (existedRoom) {
-        return { room: existedRoom, isExisted: true };
+        result.room = existedRoom;
+        result.isExisted = true;
+      } else {
+        result.room = await this.roomRepository.createPrivate(room);
       }
-
-      const createdRoom = await this.roomRepository.createPrivate(room);
-      return { room: createdRoom, isExisted: false };
     }
+
+    return result;
   }
 
   async findAllByUserId(userId: string): Promise<Room[] | []> {
@@ -63,7 +69,6 @@ export default class BaseRoomService implements RoomService {
 
   async getByIdWithUserId(id: string, userId: string): Promise<Room> {
     const room = await this.roomRepository.getById(id);
-    console.log('room', room);
 
     // Check if user is a member of the room
     if (room.memberIds.indexOf(userId) === -1) {

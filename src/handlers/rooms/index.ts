@@ -1,4 +1,4 @@
-import { NotFoundException } from '@common/exceptions';
+import { WSAction } from '@common/enums';
 import BaseMessageService from '@services/message';
 import BaseRoomService from '@services/room';
 import BaseWsService from '@services/ws';
@@ -31,37 +31,22 @@ export const getMessages = wrapperHandler(async (event: any) => {
   return messages;
 });
 
-export const wsOnCreateRoom = wrapperHandler(async (event: any, context: any) => {
+export const wsOnCreateRoom = wrapperHandler(async (event: any) => {
   // const {
   //     authorizer: { userId },
   // } = event.requestContext;
   const {
     data: { userId, memberIds },
   } = JSON.parse(event.body);
-
-  console.log(event.body);
-
-  console.log('userId: ', userId);
-  console.log('memberIds: ', memberIds);
-
   const room = await wsService.createRoom(userId, memberIds);
-
-  return {
-    status: 'ROOM_CREATED',
-    data: room,
-  };
+  return { status: WSAction.ROOM_CREATED, data: room };
 });
 
-export const wsOnCreateMessage = wrapperHandler(async (event: any, context: any) => {
+export const wsOnCreateMessage = wrapperHandler(async (event: any) => {
   // const {
   //     authorizer: { userId },
   // } = event.requestContext;
   const { action, data } = JSON.parse(event.body);
-
   const message = await wsService.createMessage(data);
-
-  return {
-    status: 'MESSAGE_CREATED',
-    data: message,
-  };
+  return { status: WSAction.MESSAGE_CREATED, data: message };
 });

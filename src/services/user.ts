@@ -17,10 +17,7 @@ export default class BaseUserService implements UserService {
   }
 
   async updateConnection(userId: string, connectionId?: string): Promise<User> {
-    const user = plainToClass(User, {
-      id: userId,
-      connectionId: connectionId,
-    });
+    const user = plainToClass(User, { id: userId, connectionId: connectionId });
     const updatedUser = await this.userRepository.updateProfile(user);
     return updatedUser;
   }
@@ -28,7 +25,6 @@ export default class BaseUserService implements UserService {
   async findByEmail(email: string): Promise<User> {
     const userId = await this.userRepository.findUserIdByEmail(email);
     const user = await this.userRepository.findById(userId);
-    console.log('findByEmail user', user);
     return user;
   }
 

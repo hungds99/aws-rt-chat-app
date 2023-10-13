@@ -12,6 +12,8 @@ export class BaseHttpResponse implements HttpResponse {
   data?: any;
   error?: any;
 
+  constructor() {}
+
   toResponse() {
     return {
       statusCode: this.code,

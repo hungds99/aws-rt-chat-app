@@ -50,13 +50,21 @@ export default class BaseAuthService implements AuthService {
     await validateSchema(LoginUserSchema, { email, password });
 
     const user = await this.userService.findByEmail(email);
-    console.log('user', user);
     if (!user || !bcrypt.compareSync(password, user.password)) {
       throw new UnauthorizedException('Wrong credentials');
     }
+
+    const userPayload = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+      type: user.type,
+    };
     return {
-      accessToken: generateJWT({ ...user, password: undefined }, { expiresIn: '1d' }),
-      refreshToken: generateJWT({ ...user, password: undefined }, { expiresIn: '30d' }),
+      accessToken: generateJWT(userPayload, { expiresIn: '1d' }),
+      refreshToken: generateJWT(userPayload, { expiresIn: '30d' }),
     };
   }
 

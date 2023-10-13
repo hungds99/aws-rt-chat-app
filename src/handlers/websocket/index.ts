@@ -24,8 +24,5 @@ export const wsOnDisconnect = wrapperHandler(async (event: any) => {
 
 export const wsDefault = wrapperHandler((event: any) => {
   const connectionId = event.requestContext.connectionId;
-  return {
-    statusCode: 200,
-    body: `${connectionId} are default!`,
-  };
+  return { statusCode: 200, body: `${connectionId} are default!` };
 });

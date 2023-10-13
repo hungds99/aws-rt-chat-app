@@ -1,3 +1,4 @@
+import { WSAction } from '@common/enums';
 import { ForbiddenException } from '@common/exceptions';
 import { Message } from '@models/message';
 import { Room } from '@models/room';
@@ -68,14 +69,10 @@ export default class BaseWsService implements WsService {
       if (user.id !== userId && user.connectionId) {
         clients.push({
           connectionId: user.connectionId,
-          payload: {
-            status: 'ROOM_JOINED',
-            data: room,
-          },
+          payload: { status: WSAction.ROOM_JOINED, data: room },
         });
       }
     });
-
     await apiGWsendMessageToClients(clients);
 
     return room;
@@ -98,15 +95,12 @@ export default class BaseWsService implements WsService {
       if (user.id !== userId && user.connectionId) {
         clients.push({
           connectionId: user.connectionId,
-          payload: {
-            status: 'MESSAGE_RECEIVED',
-            data: message,
-          },
+          payload: { status: WSAction.MESSAGE_RECEIVED, data: message },
         });
       }
     });
-    console.log('clients: ', clients);
     await apiGWsendMessageToClients(clients);
+
     return message;
   }
 }

@@ -9,25 +9,18 @@ export const chunk = <T>(array: T[], size: number): T[][] => {
   return result;
 };
 
-export const chunkDBQueryIDsInOperator = (
-  ids: string[],
-): {
-  chunkedExpressionAttributeValues: { [key: string]: any };
-  chunkedFilterExpression: string;
-} => {
-  const chunkedExpressionAttributeValues: { [key: string]: any } = {};
-  const filterExpression: string[] = [];
+export const chunkDBQueryIDsInOperator = (ids: string[]) => {
+  const chunkedIdsObj: Record<string, any> = {};
+  const chunkedFilterArr: string[] = [];
+
   const chunkedIds: string[][] = chunk<string>(ids, DB_IN_OPERATIONS_LIMIT);
   chunkedIds.forEach((chunkedIds: string[]) => {
     const filter = [];
     chunkedIds.forEach((id: string, index) => {
-      chunkedExpressionAttributeValues[`:id${index}`] = id;
+      chunkedIdsObj[`:id${index}`] = id;
       filter.push(`:id${index}`);
     });
-    filterExpression.push(`id IN (${filter.join(',')})`);
+    chunkedFilterArr.push(`id IN (${filter.join(',')})`);
   });
-  return {
-    chunkedExpressionAttributeValues,
-    chunkedFilterExpression: filterExpression.join(' OR '),
-  };
+  return { chunkedIdsObj, chunkedIdsFilterStr: chunkedFilterArr.join(' OR ') };
 };

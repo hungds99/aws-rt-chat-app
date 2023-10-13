@@ -20,8 +20,7 @@ export default class BaseRoomRepository implements RoomRepository {
   constructor() {}
 
   async findByIds(ids: string[]): Promise<Room[]> {
-    const { chunkedExpressionAttributeValues, chunkedFilterExpression } =
-      chunkDBQueryIDsInOperator(ids);
+    const { chunkedIdsObj, chunkedIdsFilterStr } = chunkDBQueryIDsInOperator(ids);
 
     const params: DocumentClient.QueryInput = {
       TableName: getEnv().MAIN_TABLE,
@@ -34,9 +33,9 @@ export default class BaseRoomRepository implements RoomRepository {
       ExpressionAttributeValues: {
         ':gsi1pk': 'ROOMS',
         ':gsi1sk': 'UPDATED_AT#',
-        ...chunkedExpressionAttributeValues,
+        ...chunkedIdsObj,
       },
-      FilterExpression: chunkedFilterExpression,
+      FilterExpression: chunkedIdsFilterStr,
     };
     const result = await DBClient.query(params).promise();
     const rooms = plainToClass(Room, result.Items, {

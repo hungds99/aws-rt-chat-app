@@ -2,10 +2,10 @@ import { BaseMessageRepository } from '@repositories/message';
 import { validateSchema } from '@utils/validation';
 import { NewMessageSchema } from '@validations/message';
 
+import BaseRoomRepository from '@repositories/room';
+import { plainToClass } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
 import { Message } from './../models/message';
-import { plainToClass } from 'class-transformer';
-import BaseRoomRepository from '@repositories/room';
 
 type NewMessage = {
   roomId: string;
