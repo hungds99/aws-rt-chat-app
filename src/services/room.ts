@@ -1,4 +1,5 @@
 import { BadRequestException } from '@common/exceptions';
+import getCurrentTime from '@libs/getCurrentTime';
 import { Room } from '@models/room';
 import BaseRoomRepository from '@repositories/room';
 import { BaseUserRepository } from '@repositories/user';
@@ -32,7 +33,7 @@ export default class BaseRoomService implements RoomService {
 
     const isGroupRoom = memberIds.length > 2;
 
-    const now = new Date().getTime();
+    const now = getCurrentTime();
     const room = plainToClass(Room, {
       id: uuidv4(),
       userId: userId,

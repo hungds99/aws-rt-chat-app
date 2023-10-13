@@ -2,6 +2,7 @@ import { BaseMessageRepository } from '@repositories/message';
 import { validateSchema } from '@utils/validation';
 import { NewMessageSchema } from '@validations/message';
 
+import getCurrentTime from '@libs/getCurrentTime';
 import BaseRoomRepository from '@repositories/room';
 import { plainToClass } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
@@ -32,7 +33,7 @@ export default class BaseMessageService implements MessageService {
 
     const { roomId, userId, content } = newMessage;
 
-    const now = new Date().getTime();
+    const now = getCurrentTime();
     const message = plainToClass(Message, {
       id: uuidv4(),
       roomId: roomId,

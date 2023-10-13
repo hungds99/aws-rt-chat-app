@@ -1,5 +1,6 @@
 import { BadRequestException, UnauthorizedException } from '@common/exceptions';
 import getAvatar from '@libs/getAvatar';
+import getCurrentTime from '@libs/getCurrentTime';
 import { CreateUserInput, User } from '@models/user';
 import { BaseUserRepository } from '@repositories/user';
 import { generateJWT, verifyJWT } from '@utils/auth';
@@ -77,7 +78,7 @@ export default class BaseAuthService implements AuthService {
       throw new BadRequestException('User already exists');
     }
 
-    const now = new Date().getTime();
+    const now = getCurrentTime();
     const user = plainToClass(User, {
       id: uuidv4(),
       firstName: firstName,

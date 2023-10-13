@@ -3,7 +3,7 @@ import { wrapperHandler } from '@utils/lambda';
 
 const userService = new BaseUserService();
 
-export const getUsers = wrapperHandler(async (event: any) => {
+export const getUsers = wrapperHandler(async () => {
   const users = await userService.findAll();
   return users;
 });
